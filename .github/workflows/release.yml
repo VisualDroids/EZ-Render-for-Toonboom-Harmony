@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  workflow_dispatch
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.RELEASETOKEN }}
+          submodules: recursive
+
+      - name: Get variables from vdpackage.json
+        run: |
+          sudo apt-get install jq
+          current_date=$(date +%y.%-m.%-d)
+          jsoncontents=$(jq '.packageVersion = "'"$current_date"'"' ./code/vdpackage.json)
+          echo -E "${jsoncontents}" > ./code/vdpackage.json
+          echo "packageName=$(jq -r '.packageName' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageShortName=$(jq -r '.packageShortName' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageFullName=$(jq -r '.packageFullName' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageID=$(jq -r '.packageID' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageVersion=$(jq -r '.packageVersion' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageRepository=$(jq -r '.packageRepository' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+          echo "packageApiURL=$(jq -r '.packageApiURL' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
+
+      - name: Create release archive
+        run: |
+          rm -rf ./release && mkdir -p ./release
+          cp -R "./bin/Visual Droids Installer.exe" "./release/${{ env.packageFullName }} Windows Installer.exe"
+          cp -R "./bin/Visual Droids Installer.app" "./release/${{ env.packageFullName }} macOS Installer.app"
+          mkdir -p "./release/packages/${{ env.packageName }}/"
+          rsync -av ./code/* "./release/packages/${{ env.packageName }}/"
+          mkdir -p "./release/${{ env.packageFullName }} macOS Installer.app/Contents/Resources/packages/${{ env.packageName }}/"
+          cp -R "./release/packages/${{ env.packageName }}/" "./release/${{ env.packageFullName }} macOS Installer.app/Contents/Resources/packages/"
+          cd "./release"
+          zip -r "${{ env.packageFullName }} Installer v${{ env.packageVersion }}.zip" . -x "*.git*"
+
+      - name: Get commit message
+        run: echo "$(git log -1 --pretty=%B)" > commit_description.txt
+
+      - name: Release to Github
+        continue-on-error: true
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
+        with:
+          name: Release ${{ env.packageVersion }}
+          draft: false
+          prerelease: false
+          body_path: commit_description.txt
+          repository: ${{ env.packageRepository }}
+          tag_name: ${{ env.packageVersion }}
+          files: |
+            ${{ env.packageFullName }} Installer v*
+            ./release/${{ env.packageFullName }} Installer v*

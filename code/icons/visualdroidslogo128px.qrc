@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>visualdroidslogo128px.png</file>
+  </qresource>
+</RCC>

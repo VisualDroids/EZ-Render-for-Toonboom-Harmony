@@ -1,0 +1,20 @@
+[submodule "code/lib/FileArchiver"]
+	path = code/lib/FileArchiver
+	url = https://github.com/miwgel/File-Archiver-for-Toonboom-Harmony-Scripts
+	branch = main
+[submodule "code/lib/ToolbarHook"]
+	path = code/lib/ToolbarHook
+	url = https://github.com/miwgel/Toolbar-Hook-for-Toonboom-Harmony-Scripts
+	branch = main
+[submodule "code/lib/Network"]
+	path = code/lib/Network
+	url = https://github.com/miwgel/Network-Module-for-Toonboom-Harmony-Scripts
+	branch = main
+[submodule "code/lib/Updater"]
+	path = code/lib/Updater
+	url = https://github.com/miwgel/Updater-for-Toonboom-Harmony-Scripts
+	branch = main
+[submodule "code/lib/AudioPlayer"]
+	path = code/lib/AudioPlayer
+	url = https://github.com/miwgel/Audio-Player-for-Tooonboom-Harmony
+	branch = main

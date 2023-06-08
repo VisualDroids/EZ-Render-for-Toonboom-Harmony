@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Visual Droids: Create symbolic link for development",
+      "detail": "Make a symbolic link of the code folder inside Toonboom Harmony 22 script/packages folder",
+      "type": "shell",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "revealProblems": "onProblem",
+        "close": false
+      },
+      "osx": {
+        "command": "mkdir -p '${userHome}/Library/Preferences/Toon Boom Animation/Toon Boom Harmony Premium/2200-scripts/packages/${input:packageName}' && rm -rf '${userHome}/Library/Preferences/Toon Boom Animation/Toon Boom Harmony Premium/2200-scripts/packages/${input:packageName}' && ln -s '${workspaceFolder}/code' '${userHome}/Library/Preferences/Toon Boom Animation/Toon Boom Harmony Premium/2200-scripts/packages/${input:packageName}'"
+      },
+      "windows": {
+        "options": {
+          "shell": {
+            "executable": "cmd.exe",
+            "args": ["/c"]
+          }
+        },
+        "command": "mklink /D \"${userHome}\\AppData\\Roaming\\Toon Boom Animation\\Toon Boom Harmony Premium\\2200-scripts\\packages\\${input:packageName}\" \"${workspaceFolder}\\code\""
+      }
+    },
+    {
+      "label": "Visual Droids: Update Git Submodules Recursively",
+      "detail": "Bring contents of this project's submodules recursively",
+      "type": "shell",
+      "command": "git",
+      "args": ["submodule", "update", "--recursive", "--init"]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "packageName",
+      "type": "command",
+      "command": "extension.commandvariable.file.content",
+      "args": {
+        "fileName": "${workspaceFolder}/code/vdpackage.json",
+        "json": "content.packageName"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "packagePublisher": "Visual Droids",
+  "packageName": "VisualDroidsEZRender",
+  "packageShortName": "EZ Render",
+  "packageFullName": "Visual Droids EZ Render",
+  "packageID": "com.visualdroids.ezrender",
+  "packageVersion": "23.6.8",
+  "packageRepository": "VisualDroids/EZ-Render-for-Toonboom-Harmony-Updates",
+  "packageApiURL": "https://api.github.com/repos/VisualDroids/EZ-Render-for-Toonboom-Harmony-Updates/releases/latest"
+}
