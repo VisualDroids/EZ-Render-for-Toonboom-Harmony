@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Visual Droids - Download</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Download started...</h1>
+    <script>
+      fetch("./code/vdpackage.json")
+        .then((response) => response.json())
+        .then((data) => {
+          const packageApiURL = data.packageApiURL;
+          fetch(packageApiURL)
+            .then((response) => response.json())
+            .then((data) => {
+              window.location = data.assets[0].browser_download_url;
+              setTimeout(function () {
+                window.location = "https://stuff.visualdroids.com";
+              }, 5000);
+            });
+        });
+    </script>
+  </body>
+</html>
