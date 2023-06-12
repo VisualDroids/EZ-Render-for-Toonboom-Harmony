@@ -23,7 +23,7 @@ jobs:
           sudo apt-get install jq
           current_date=$(date +%y.%-m.%-d)
           jsoncontents=$(jq '.packageVersion = "'"$current_date"'"' ./code/vdpackage.json)
-          jsoncontents=$(jq '.debugMode = false' $jsoncontents)
+          jsoncontents=$(jq '.debugMode = false' ./code/vdpackage.json)
           echo -E "${jsoncontents}" > ./code/vdpackage.json
           echo "packageName=$(jq -r '.packageName' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
           echo "packageShortName=$(jq -r '.packageShortName' ./code/vdpackage.json)" | tee --append $GITHUB_ENV
