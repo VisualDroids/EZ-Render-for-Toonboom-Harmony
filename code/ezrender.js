@@ -21,23 +21,22 @@ TODO: #7 Catch errors in toolbar's quick render & advanced ui's render buttons, 
 TODO: #13 Render a single frame
 */
 
-function createEZRender(packageInfo, debug) {
-  this.__proto__.ezrender = new EzRender(packageInfo, debug);
+function createEZRender(packageInfo) {
+  this.__proto__.ezrender = new EzRender(packageInfo);
 }
 
 /**
- * @param { object } packageInfo Object with information about the current package (from configure.js)
- * @param { bool } debug Print extra debug messages
+ * @param { object } packageInfo Object with information about the current package
  */
-function EzRender(packageInfo, debug) {
-  this.debug = debug || false;
+function EzRender(packageInfo) {
+  this.debug = packageInfo.debug;
 
   this.packageInfo = packageInfo;
 
   this.presets = new presetsObject(
-    about.isWindowsArch()
+    (about.isWindowsArch()
       ? System.getenv("HOMEPATH")
-      : System.getenv("HOME") + "/.ezrender.config"
+      : System.getenv("HOME")) + "/.ezrender.config"
   );
 
   this.outputFolder = (scene.currentProjectPathRemapped() + "/renders")
@@ -71,7 +70,7 @@ Object.defineProperty(presetsObject.prototype, "data", {
       var data = this.presetsFile.read();
       this.presetsFile.close();
     } catch (error) {
-      this.log(error);
+      MessageLog.trace(error);
       this.presetsFile.open(2);
       this.presetsFile.write(JSON.stringify({}, null, 2));
       this.presetsFile.close();
@@ -87,7 +86,7 @@ Object.defineProperty(presetsObject.prototype, "data", {
       this.presetsFile.write(JSON.stringify(obj, null, 2));
       this.presetsFile.close();
     } catch (error) {
-      this.log("Store preset error: " + error);
+      MessageLog.trace("Store preset error: " + error);
     }
   },
 });
@@ -230,7 +229,7 @@ presetsObject.prototype.initPresetsFile = function () {
   try {
     new QDir(this.presetsFile.path).mkpath(this.presetsFile.path); // Create settings folder
   } catch (error) {
-    this.log(error);
+    MessageLog.trace(error);
   }
 
   this.data = examplePresets;

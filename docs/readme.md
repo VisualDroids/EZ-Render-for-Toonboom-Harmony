@@ -17,7 +17,7 @@
 
 </p>
 
-<a href="https://github.com/VisualDroids/EZ-Render-for-Toonboom-Harmony/releases/latest"><img src="https://raw.githubusercontent.com/VisualDroids/EZ-Render-for-Toonboom-Harmony/master/docs/img/windows-macos.png" alt="" width="100"></a>
+<a href="https://github.com/VisualDroids/EZ-Render-for-Toonboom-Harmony/releases/latest"><img src="https://raw.githubusercontent.com/VisualDroids/EZ-Backup-for-Toonboom-Harmony/master/docs/img/windows-macos.png" alt="" width="100"></a>
 
 <p align="center">
 

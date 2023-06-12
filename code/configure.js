@@ -4,8 +4,6 @@
  * @author miwgel < github.com/miwgel >
  */
 
-var debugMode = true;
-
 function fetchData(absFilePath) {
   var readFile = new QFile(absFilePath);
   try {
@@ -31,6 +29,7 @@ const packageFolder = __file__
 var vdPackage = JSON.parse(fetchData(packageFolder + "/vdpackage.json"));
 
 const packageInfo = {
+  debugMode: vdPackage.debugMode,
   packagePublisher: vdPackage.packagePublisher,
   packageName: vdPackage.packageName,
   packageShortName: vdPackage.packageShortName,
@@ -60,7 +59,7 @@ function configure(packageFolder, packageName) {
     customizable: false,
   });
 
-  if (debugMode) {
+  if (packageInfo.debugMode) {
     toolbar.addButton({
       text: "Fast Debugger",
       icon: "",
@@ -78,23 +77,25 @@ function configure(packageFolder, packageName) {
       (parentContext = this),
       (packageInfo = packageInfo),
       (onCompleteCallback = null),
-      (debug = debugMode)
+      (debug = packageInfo.debugMode)
     );
   } catch (error) {
     MessageLog.trace(error);
   }
   try {
     // Create an EZ Render instance
-    var createEZRender = require(packageFolder + "/ezrender.js").createEZRender;
-    createEZRender(packageInfo, debugMode);
+    var createEZRender = require(packageInfo.packageFolder +
+      "/ezrender.js").createEZRender;
+    createEZRender(packageInfo, packageInfo.debugMode);
   } catch (error) {
     MessageLog.trace(error);
   }
 }
 
 function restartToolbar() {
-  var restartEZRender = require(packageFolder + "/ezrender.js").restartEZRender;
-  restartEZRender.call(this, packageInfo, debugMode);
+  var restartEZRender = require(packageInfo.packageFolder +
+    "/ezrender.js").restartEZRender;
+  restartEZRender.call(this, packageInfo, packageInfo.debugMode);
   // configure(packageFolder);
 }
 
