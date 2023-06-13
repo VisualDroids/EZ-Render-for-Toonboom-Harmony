@@ -5,7 +5,7 @@
   "packageShortName": "EZ Render",
   "packageFullName": "Visual Droids EZ Render",
   "packageID": "com.visualdroids.ezrender",
-  "packageVersion": "23.6.12",
+  "packageVersion": "23.6.13",
   "packageRepository": "VisualDroids/EZ-Render-for-Toonboom-Harmony",
   "packageApiURL": "https://api.github.com/repos/VisualDroids/EZ-Render-for-Toonboom-Harmony/releases/latest"
 }
