@@ -49,8 +49,8 @@ function EzRender(packageInfo) {
   this.renderMode = "";
 
   // Init sequence
-  this.setupToolbarUI(); // Setup Toolbar UI
-  this.hookToolbar(); // Hook Toolbar UI to the Toonboom Harmony toolbar
+  // this.setupToolbarUI(); // Setup Toolbar UI
+  // this.hookToolbar(); // Hook Toolbar UI to the Toonboom Harmony toolbar
   this.setupAdvancedUI(); // Setup Advanced UI
   this.refreshPresetsAndDisplays(); // Update Presets at startup | Needs both the toolbar ui & the advanced ui loaded
 }
@@ -455,9 +455,11 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.ui.setCurrentWidget(this.ui.progress);
     // this.ui.setCurrentWidget(this)
     this.ui.progress.openRendersFolder.setVisible(false);
+    this.ui.progress.goBack.setVisible(false);
     this.ui.progress.progressBar.setVisible(true);
     this.renderEngine.call(this);
     this.ui.progress.openRendersFolder.setVisible(true);
+    this.ui.progress.goBack.setVisible(true);
     this.ui.progress.progressBar.setVisible(false);
     this.ui.progress.progressText.text = "Render complete 😊";
   });
@@ -627,6 +629,10 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.ui.setCurrentWidget(this.ui.main);
     this.openFolder.call(this, this.outputFolder);
   });
+
+  this.ui.progress.goBack.clicked.connect(this, function () {
+    this.ui.setCurrentWidget(this.ui.main);
+  });
 };
 
 EzRender.prototype.showAdvancedUI = function () {
@@ -699,7 +705,7 @@ EzRender.prototype.refreshUIDisplayNodes = function () {
 
 EzRender.prototype.refreshPresetsAndDisplays = function () {
   this.ui.main.presetBox.presetListWidget.clear(); // Clear advanced ui preset list
-  this.toolbarui.presetList.clear(); // Clear Toolbar preset list
+  // this.toolbarui.presetList.clear(); // Clear Toolbar preset list
 
   this.ui.main.displayBox.displaySelector.clear(); // Clear advanced ui display list
 
@@ -726,7 +732,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
     this.ui.main.presetBox.presetListWidget.addItem(item);
 
     // Add item to the toolbar ui preset list
-    this.toolbarui.presetList.addItem(preset);
+    // this.toolbarui.presetList.addItem(preset);
   }
   // this.toolbarui.presetList.adjustSize(); // Does not work for resizing toolbar
 };
@@ -819,7 +825,7 @@ EzRender.prototype.renderEngine = function () {
 
     // Simple mode renders a single preset selected from the toolbar ui and the
     if (this.renderMode == "Simple") {
-      progressWidget = this.toolbarui;
+      // progressWidget = this.toolbarui;
       renderDisplays.push(scene.getDefaultDisplay());
       enabledPresets.push(this.selectedPreset);
     }
@@ -873,7 +879,8 @@ EzRender.prototype.renderEngine = function () {
         if (renderPresets[currentPreset].render_formats.mov) {
           this.movRenderer.call(
             this,
-            renderFullOutputPath + "-" + this.getCurrentDateTime() + ".mov",
+            // renderFullOutputPath + "-" + this.getCurrentDateTime() + ".mov",
+            this.versionedPath(renderFullOutputPath + ".mov"),
             renderPresets[currentPreset].resolution_x,
             renderPresets[currentPreset].resolution_y,
             currentDisplay.split("/").pop(),
@@ -883,7 +890,8 @@ EzRender.prototype.renderEngine = function () {
         if (renderPresets[currentPreset].render_formats.pngseq) {
           this.pngRenderer.call(
             this,
-            renderFullOutputPath + "-" + this.getCurrentDateTime(),
+            // renderFullOutputPath + "-" + this.getCurrentDateTime(),
+            this.versionedPath(renderFullOutputPath),
             renderPresets[currentPreset].resolution_x,
             renderPresets[currentPreset].resolution_y,
             currentDisplay,
@@ -911,7 +919,7 @@ EzRender.prototype.movRenderer = function (
 ) {
   try {
     if (about.isMacArch()) {
-      this.toolbarui.progressBar.setVisible(false);
+      // this.toolbarui.progressBar.setVisible(false);
 
       exporter.exportToQuicktime(
         (displayName = ""),
@@ -1070,15 +1078,17 @@ EzRender.prototype.pngRenderer = function (
       render.renderScene(thisFrame, thisFrame);
     }
 
-    var zipper = new (require(this.packageInfo.packageFolder +
-      "/lib/FileArchiver/sevenzip.js").SevenZip)(
-      (parentContext = this),
-      (source = tmpFolder.path()),
-      (destination = outputPath),
-      (debug = this.debug)
-    );
+    // var zipper = new (require(this.packageInfo.packageFolder +
+    //   "/lib/FileArchiver/sevenzip.js").SevenZip)(
+    //   (parentContext = this),
+    //   (source = tmpFolder.path()),
+    //   (destination = outputPath),
+    //   (debug = this.debug)
+    // );
 
-    zipper.zip();
+    // zipper.zip();
+
+    this.copyFolderRecursively(tmpFolder.path(), outputPath);
 
     tmpFolder.removeRecursively();
   } catch (error) {
@@ -1097,6 +1107,65 @@ EzRender.prototype.createFolder = function (path) {
 
 EzRender.prototype.openFolder = function (folder) {
   QDesktopServices.openUrl(QUrl.fromLocalFile(folder));
+};
+
+EzRender.prototype.copyFolderRecursively = function (
+  sourceFolder,
+  destinationFolder
+) {
+  var sourceDir = new QDir(sourceFolder);
+  var destinationDir = new QDir(destinationFolder);
+
+  if (!sourceDir.exists()) {
+    this.log("Source folder does not exist.");
+    return;
+  }
+
+  if (!destinationDir.exists()) {
+    destinationDir.mkpath(destinationFolder);
+  }
+
+  var fileInfoList = sourceDir.entryInfoList(
+    QDir.Filters(QDir.Files | QDir.Dirs | QDir.NoDotAndDotDot)
+  );
+
+  for (var i = 0; i < fileInfoList.length; i++) {
+    var fileInfo = fileInfoList[i];
+    var sourcePath = fileInfo.absoluteFilePath();
+    var destinationPath = destinationDir.absoluteFilePath(fileInfo.fileName());
+
+    if (fileInfo.isDir()) {
+      this.copyFolderRecursively(sourcePath, destinationPath);
+    } else {
+      var file = new QFile(sourcePath);
+      if (file.exists() && file.copy(destinationPath)) {
+        this.log("File copied: " + destinationPath);
+      } else {
+        this.log("Error copying file: " + destinationPath);
+      }
+    }
+  }
+};
+
+EzRender.prototype.versionedPath = function (originalPath) {
+  var pathInfo = new QFileInfo(originalPath);
+
+  var basePath = pathInfo.absoluteDir().filePath(pathInfo.baseName());
+  var extension = pathInfo.completeSuffix();
+
+  if (!pathInfo.exists()) return originalPath;
+
+  var version = 1;
+  var newPath = basePath + "_" + version;
+  if (extension) newPath += "." + extension;
+
+  while (new QFileInfo(newPath).exists()) {
+    version++;
+    newPath = basePath + "_" + version;
+    if (extension) newPath += "." + extension;
+  }
+
+  return newPath;
 };
 
 EzRender.prototype.getCurrentDateTime = function () {
@@ -1230,6 +1299,12 @@ function restartEZRender(packageInfo, debugMode) {
   this.firstStage.start(0);
   this.secondStage.start(1000);
   // this.thirdStage.start(2000);
+}
+
+function emergencyStart() {
+  var packageInfo = require("./configure.js").packageInfo;
+  var isi = new EzRender(packageInfo);
+  isi.showAdvancedUI();
 }
 
 exports.createEZRender = createEZRender;

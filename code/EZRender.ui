@@ -865,6 +865,13 @@ of the render.</string>
      </widget>
     </item>
     <item>
+     <widget class="QPushButton" name="goBack">
+      <property name="text">
+       <string>Go Back</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <spacer name="verticalSpacer_4">
       <property name="orientation">
        <enum>Qt::Vertical</enum>

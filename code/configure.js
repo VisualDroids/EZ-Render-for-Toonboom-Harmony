@@ -68,6 +68,13 @@ function configure(packageFolder, packageName) {
     });
   }
 
+  toolbar.addButton({
+    text: "EZ Render",
+    icon: "EZRender.png",
+    checkable: false,
+    action: "emergencyStart in " + packageFolder + "/ezrender.js",
+  });
+
   ScriptManager.addToolbar(toolbar);
 
   try {
@@ -82,22 +89,22 @@ function configure(packageFolder, packageName) {
   } catch (error) {
     MessageLog.trace(error);
   }
-  try {
-    // Create an EZ Render instance
-    var createEZRender = require(packageInfo.packageFolder +
-      "/ezrender.js").createEZRender;
-    createEZRender(packageInfo, packageInfo.debugMode);
-  } catch (error) {
-    MessageLog.trace(error);
-  }
+  // try {
+  //   // Create an EZ Render instance
+  //   var createEZRender = require(packageInfo.packageFolder +
+  //     "/ezrender.js").createEZRender;
+  //   createEZRender(packageInfo, packageInfo.debugMode);
+  // } catch (error) {
+  //   MessageLog.trace(error);
+  // }
 }
 
-function restartToolbar() {
-  var restartEZRender = require(packageInfo.packageFolder +
-    "/ezrender.js").restartEZRender;
-  restartEZRender.call(this, packageInfo, packageInfo.debugMode);
-  // configure(packageFolder);
-}
+// function restartToolbar() {
+//   var restartEZRender = require(packageInfo.packageFolder +
+//     "/ezrender.js").restartEZRender;
+//   restartEZRender.call(this, packageInfo, packageInfo.debugMode);
+//   // configure(packageFolder);
+// }
 
 exports.packageInfo = packageInfo;
 exports.configure = configure;
