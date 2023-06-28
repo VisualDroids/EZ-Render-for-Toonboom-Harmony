@@ -34,9 +34,11 @@ function EzRender(packageInfo) {
   this.packageInfo = packageInfo;
 
   this.presets = new presetsObject(
-    (about.isWindowsArch()
-      ? System.getenv("HOMEPATH")
-      : System.getenv("HOME")) + "/.ezrender.config"
+    fileMapper.toNativePath(
+      (about.isWindowsArch()
+        ? System.getenv("HOMEPATH")
+        : System.getenv("HOME")) + "/.ezrender.config"
+    )
   );
 
   this.outputFolder = (scene.currentProjectPathRemapped() + "/renders")
@@ -58,35 +60,35 @@ function EzRender(packageInfo) {
 // EzRender.prototype = new QObject();
 
 // Presets object prototype and functions
-function presetsObject(path) {
-  this.presetsFile = new File(path);
+function presetsObject(presetsFilePath) {
+  this.presetsFile = new QFile(presetsFilePath);
 }
 
 Object.defineProperty(presetsObject.prototype, "data", {
   get: function () {
-    if (!this.presetsFile.exists) this.initPresetsFile(); // Initialize settings file if it doesn't exist
     try {
-      this.presetsFile.open(1);
-      var data = this.presetsFile.read();
-      this.presetsFile.close();
+      if (!this.presetsFile.exists()) this.initPresetsFile(); // Initialize settings file if it doesn't exist
+      if (!this.presetsFile.open(QIODevice.ReadOnly)) {
+        throw new Error("Unable to open file.");
+      }
+      return JSON.parse(this.presetsFile.readAll());
     } catch (error) {
       MessageLog.trace(error);
-      this.presetsFile.open(2);
-      this.presetsFile.write(JSON.stringify({}, null, 2));
-      this.presetsFile.close();
-      this.presetsFile.open(1);
-      var data = this.presetsFile.read();
+    } finally {
       this.presetsFile.close();
     }
-    return JSON.parse(data);
   },
   set: function (obj) {
     try {
-      this.presetsFile.open(2);
+      if (!this.presetsFile.exists()) this.initPresetsFile(); // Initialize settings file if it doesn't exist
+      if (!this.presetsFile.open(QIODevice.WriteOnly)) {
+        throw new Error("Unable to open file.");
+      }
       this.presetsFile.write(JSON.stringify(obj, null, 2));
-      this.presetsFile.close();
     } catch (error) {
-      MessageLog.trace("Store preset error: " + error);
+      MessageLog.trace(error);
+    } finally {
+      this.presetsFile.close();
     }
   },
 });
@@ -227,7 +229,8 @@ presetsObject.prototype.initPresetsFile = function () {
     },
   };
   try {
-    new QDir(this.presetsFile.path).mkpath(this.presetsFile.path); // Create settings folder
+    // new QDir(this.presetsFile.path).mkpath(this.presetsFile.path);
+    new QDir().mkpath(new QFileInfo(this.presetsFile).absolutePath()); // Create settings folder
   } catch (error) {
     MessageLog.trace(error);
   }
