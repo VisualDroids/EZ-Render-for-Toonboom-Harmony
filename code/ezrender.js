@@ -2,7 +2,7 @@
  * @file EZ Render for Toonboom Harmony
  * @version 23.6
  * @copyright Visual Droids < www.visualdroids.com >
- * @author miwgel < www.github.com/miwgel >
+ * @author miwgel < biste.cc >
  * @license
  * Copyright 2023 Visual Droids
  * The current script (the "Script") is the exclusive property of Visual Droids and is protected by copyright laws and international treaty provisions. The Script is licensed, not sold.
@@ -20,10 +20,6 @@ TODO: #6 Resize toolbar after presets are changed elsewhere
 TODO: #7 Catch errors in toolbar's quick render & advanced ui's render buttons, when there are no presets.
 TODO: #13 Render a single frame
 */
-
-function createEZRender(packageInfo) {
-  this.__proto__.ezrender = new EzRender(packageInfo);
-}
 
 /**
  * @param { object } packageInfo Object with information about the current package
@@ -50,6 +46,13 @@ function EzRender(packageInfo) {
   this.editMode = "";
   this.renderMode = "";
 
+  this.beep = {
+    win: new (require(this.packageInfo.packageFolder +
+      "/lib/AudioPlayer/audioplayer.js").AudioPlayer)(
+      this.packageInfo.packageFolder + "/sound/win.wav"
+    ),
+  };
+
   // Init sequence
   // this.setupToolbarUI(); // Setup Toolbar UI
   // this.hookToolbar(); // Hook Toolbar UI to the Toonboom Harmony toolbar
@@ -71,7 +74,6 @@ Object.defineProperty(presetsObject.prototype, "data", {
       if (!this.presetsFile.open(QIODevice.ReadOnly)) {
         throw new Error("Unable to open file.");
       }
-      // MessageLog.trace(this.presetsFile.errorString());
       return JSON.parse(this.presetsFile.readAll());
     } catch (error) {
       MessageLog.trace(error);
@@ -251,9 +253,31 @@ EzRender.prototype.getselectedDisplayNodes = function () {
 // User interface functions
 EzRender.prototype.setupAdvancedUI = function () {
   // Load User Interface
+  // var packageView = ScriptManager.getView("EZ Render");
+  // this.ui = ScriptManager.loadViewUI(
+  //   packageView,
+  //   this.packageInfo.packageFolder + "/EZRender.ui"
+  // );
+
   this.ui = UiLoader.load(this.packageInfo.packageFolder + "/EZRender.ui");
+  // this.ui.setParent(this);
+  // this.ui = ScriptManager.loadViewUI(
+  //   this,
+  //   this.packageInfo.packageFolder + "/EZRender.ui"
+  // );
+
   if (!about.isMacArch()) {
     this.ui.setWindowFlags(new Qt.WindowFlags(Qt.Window));
+    this.ui.setWindowTitle("EZ Render by Visual Droids");
+  } else {
+    this.ui.setWindowFlags(
+      new Qt.WindowFlags(
+        Qt.Tool |
+          Qt.CustomizeWindowHint |
+          Qt.WindowCloseButtonHint |
+          Qt.WindowStaysOnTopHint
+      )
+    );
     this.ui.setWindowTitle("EZ Render by Visual Droids");
   }
   // this.ui.setAttribute(Qt.WA_DeleteOnClose);
@@ -451,12 +475,12 @@ EzRender.prototype.setupAdvancedUI = function () {
 
   this.ui.main.frameBox.setStartFrameButton.clicked.connect(this, function () {
     scene.setStartFrame(frame.current());
-    Timeline.centerOnFrame(frame.current());
+    // Timeline.centerOnFrame(frame.current());
   });
 
   this.ui.main.frameBox.setEndFrameButton.clicked.connect(this, function () {
     scene.setStopFrame(frame.current());
-    Timeline.centerOnFrame(frame.current());
+    // Timeline.centerOnFrame(frame.current());
   });
 
   this.ui.main.buttonRender.clicked.connect(this, function () {
@@ -470,6 +494,7 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.ui.progress.openRendersFolder.setVisible(true);
     this.ui.progress.goBack.setVisible(true);
     this.ui.progress.progressBar.setVisible(false);
+    this.beep.win.play();
     this.ui.progress.progressText.text = "Render complete 😊";
   });
 
@@ -768,11 +793,11 @@ EzRender.prototype.setupToolbarUI = function () {
 
   this.toolbarui.setStartFrameButton.clicked.connect(this, function () {
     scene.setStartFrame(frame.current());
-    Timeline.centerOnFrame(frame.current());
+    // Timeline.centerOnFrame(frame.current());
   });
   this.toolbarui.setEndFrameButton.clicked.connect(this, function () {
     scene.setStopFrame(frame.current());
-    Timeline.centerOnFrame(frame.current());
+    // Timeline.centerOnFrame(frame.current());
   });
 
   this.toolbarui.quickRenderButton.clicked.connect(this, function () {
@@ -1202,119 +1227,4 @@ EzRender.prototype.log = function (string) {
     );
 };
 
-function restartEZRender(packageInfo, debugMode) {
-  debugMode = debugMode || false;
-
-  // For quick debuging
-  MessageLog.clearLog();
-
-  // Put contexts in a variable
-  var tbhContext = this;
-  var tbhProto = this.__proto__;
-
-  this.firstStage = new QTimer();
-  this.firstStage.singleShot = true;
-  this.firstStage.timeout.connect(this, function () {
-    try {
-      try {
-        MessageLog.trace("Unloading EZ Render...");
-        MessageLog.trace(
-          "Is ezrender an qobject: " + (tbhProto.ezrender instanceof QObject)
-        );
-      } catch (error) {
-        MessageLog.trace(error);
-      }
-
-      var objDeleter = function (object) {
-        for (var obj in object) {
-          try {
-            if (typeof object[obj].children() == "object") {
-              MessageLog.trace("objeto");
-              objDeleter(object[obj].children());
-              try {
-                object[obj].children().deleteLater();
-              } catch (error) {
-                MessageLog.trace(error);
-              }
-              delete object[obj];
-            }
-          } catch (error) {
-            MessageLog.trace(error);
-          }
-        }
-      };
-      try {
-        tbhProto.ezrender.toolbarui.deleteLater();
-        tbhProto.ezrender.hook.toolbar.deleteLater();
-        tbhProto.ezrender.ui.deleteLater();
-        // objDeleter(tbhProto.ezrender);
-        tbhProto.ezrender = {};
-      } catch (error) {
-        MessageLog.trace(error);
-      }
-    } catch (error) {
-      MessageLog.trace(error);
-    }
-  });
-
-  this.secondStage = new QTimer();
-  this.secondStage.singleShot = true;
-  this.secondStage.timeout.connect(this, function () {
-    try {
-      require(packageInfo.packageFolder + "/configure.js").configure.call(
-        tbhContext,
-        packageInfo,
-        true
-      );
-
-      // MessageLog.trace("Creating Toolbar...");
-      // var toolbar = new ScriptToolbarDef({
-      //   id: packageInfo.packageID,
-      //   text: packageInfo.packageFullName,
-      //   customizable: false,
-      // });
-
-      // if (debugMode) {
-      //   toolbar.addButton({
-      //     text: "Fast Debugger",
-      //     icon: "",
-      //     checkable: false,
-      //     action:
-      //       "restartToolbar in " + packageInfo.packageFolder + "/configure.js",
-      //   });
-      // }
-
-      // ScriptManager.addToolbar(toolbar);
-    } catch (error) {
-      MessageLog.trace(error);
-    }
-  });
-
-  // this.thirdStage = new QTimer();
-  // this.thirdStage.singleShot = true;
-  // this.thirdStage.timeout.connect(this, function () {
-  //   try {
-  //     MessageLog.trace("Starting EZ Render...");
-  //     require(packageInfo.packageFolder + "/ezrender.js").createEZRender.call(
-  //       tbhContext,
-  //       packageInfo,
-  //       true
-  //     );
-  //   } catch (error) {
-  //     MessageLog.trace(error);
-  //   }
-  // });
-
-  this.firstStage.start(0);
-  this.secondStage.start(1000);
-  // this.thirdStage.start(2000);
-}
-
-function emergencyStart() {
-  var packageInfo = require("./configure.js").packageInfo;
-  var isi = new EzRender(packageInfo);
-  isi.showAdvancedUI();
-}
-
-exports.createEZRender = createEZRender;
-exports.restartEZRender = restartEZRender;
+exports.EzRender = EzRender;
