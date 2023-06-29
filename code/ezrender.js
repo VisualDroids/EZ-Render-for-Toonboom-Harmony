@@ -36,7 +36,7 @@ function EzRender(packageInfo) {
   this.presets = new presetsObject(
     fileMapper.toNativePath(
       (about.isWindowsArch()
-        ? System.getenv("HOMEPATH")
+        ? System.getenv("USERPROFILE")
         : System.getenv("HOME")) + "/.ezrender.config"
     )
   );
@@ -71,6 +71,7 @@ Object.defineProperty(presetsObject.prototype, "data", {
       if (!this.presetsFile.open(QIODevice.ReadOnly)) {
         throw new Error("Unable to open file.");
       }
+      // MessageLog.trace(this.presetsFile.errorString());
       return JSON.parse(this.presetsFile.readAll());
     } catch (error) {
       MessageLog.trace(error);
@@ -84,7 +85,9 @@ Object.defineProperty(presetsObject.prototype, "data", {
       if (!this.presetsFile.open(QIODevice.WriteOnly)) {
         throw new Error("Unable to open file.");
       }
-      this.presetsFile.write(JSON.stringify(obj, null, 2));
+      this.presetsFile.write(
+        new QByteArray().append(JSON.stringify(obj, null, 2))
+      );
     } catch (error) {
       MessageLog.trace(error);
     } finally {
@@ -229,13 +232,16 @@ presetsObject.prototype.initPresetsFile = function () {
     },
   };
   try {
-    // new QDir(this.presetsFile.path).mkpath(this.presetsFile.path);
     new QDir().mkpath(new QFileInfo(this.presetsFile).absolutePath()); // Create settings folder
+    this.presetsFile.open(QIODevice.WriteOnly);
+    this.presetsFile.write(
+      new QByteArray().append(JSON.stringify(examplePresets, null, 2))
+    );
   } catch (error) {
     MessageLog.trace(error);
+  } finally {
+    this.presetsFile.close();
   }
-
-  this.data = examplePresets;
 };
 
 EzRender.prototype.getselectedDisplayNodes = function () {
