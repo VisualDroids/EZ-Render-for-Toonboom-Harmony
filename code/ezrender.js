@@ -217,6 +217,7 @@ presetsObject.prototype.initPresetsFile = function () {
         mp4: false,
         pngseq: true,
       },
+      filename_format: "",
     },
     2: {
       preset_name: "Full HD mov",
@@ -230,6 +231,7 @@ presetsObject.prototype.initPresetsFile = function () {
         mp4: false,
         pngseq: false,
       },
+      filename_format: "",
     },
     3: {
       preset_name: "Low res Test",
@@ -243,6 +245,7 @@ presetsObject.prototype.initPresetsFile = function () {
         mp4: false,
         pngseq: true,
       },
+      filename_format: "",
     },
   };
   try {
@@ -1179,13 +1182,48 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       formatsDelegate(this.supportedFormats)
     );
     // Add Preset Formats
-
     this.ui.main.presetBox.presetsTable.setItem(
       currentTableIndex,
       5,
       new QTableWidgetItem(formatList.join(", "))
     );
+
+    function tagDelegate(tagList) {
+      var delegate = new QStyledItemDelegate();
+
+      delegate.createEditor = function (parent, option, index) {
+        var editor = new QLineEdit(parent);
+        var completer = new QCompleter(tagList, editor);
+        completer.caseSensitivity = Qt.CaseInsensitive;
+        completer.completionMode = QCompleter.InlineCompletion;
+        editor.setCompleter(completer);
+        return editor;
+      };
+
+      delegate.setEditorData = function (editor, index) {
+        var value = index.model().data(index, Qt.EditRole);
+        editor.text = value;
+      };
+
+      delegate.setModelData = function (editor, model, index) {
+        model.setData(index, editor.text, Qt.EditRole);
+      };
+
+      return delegate;
+    }
+
+    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+      6,
+      tagDelegate(["%date%", "%time%", "%scenename%", "%sceneversion%"])
+    );
+
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      6,
+      new QTableWidgetItem(currentPresets[preset]["filename_format"])
+    );
   }
+
   this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
 
   this.ui.main.presetBox.presetsTable.blockSignals(false);

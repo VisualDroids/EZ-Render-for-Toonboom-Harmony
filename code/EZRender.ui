@@ -333,7 +333,7 @@
            </column>
            <column>
             <property name="text">
-             <string>File Name</string>
+             <string>Filename Format</string>
             </property>
            </column>
            <column>
