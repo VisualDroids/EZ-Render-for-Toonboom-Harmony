@@ -729,12 +729,6 @@ EzRender.prototype.setupAdvancedUI = function () {
           obj[currentItem.row + 1]["aspect_ratio"] = currentItem.itemText;
           if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
             var aspectRatio = currentItem.itemText.split(":");
-            MessageLog.trace(
-              Math.round(
-                (obj[currentItem.row + 1]["resolution_x"] * aspectRatio[1]) /
-                  aspectRatio[0]
-              )
-            );
             obj[currentItem.row + 1]["resolution_y"] = String(
               Math.round(
                 (obj[currentItem.row + 1]["resolution_x"] * aspectRatio[1]) /
@@ -835,10 +829,7 @@ EzRender.prototype.setupAdvancedUI = function () {
         if (currentItem.column === 5) {
           var editedFormats = currentItem.itemText.split(", ");
 
-          // MessageLog.trace(editedFormats);
-
           for (var supportedFormat in this.supportedFormats) {
-            MessageLog.trace(editedFormats.indexOf(supportedFormat) > -1);
             obj[currentItem.row + 1]["render_formats"][supportedFormat] =
               editedFormats.indexOf(supportedFormat) > -1;
           }
@@ -1137,9 +1128,32 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
             action.checkable = true;
             action.checked = enabledFormats.indexOf(option) > -1;
           }
+
+          // Connect 'triggered' signal to a function that updates the text of the tool_button
+          menu.triggered.connect(this, function (action) {
+            MessageLog.trace("menu triggered");
+            var text = "";
+            var actions = menu.actions();
+            for (var i = 0; i < actions.length; i++) {
+              if (actions[i].checked) {
+                if (text != "") text += ", ";
+                text += actions[i].text;
+              }
+            }
+            tool_button.text = text;
+          });
+
           tool_button.setMenu(menu);
           tool_button.popupMode = QToolButton.InstantPopup;
-          tool_button.showMenu();
+          // Use QTimer to delay showing the popup until after the combo box is shown
+          var timer = new QTimer();
+          timer.singleShot = true;
+          timer.timeout.connect(function () {
+            tool_button.showMenu();
+          });
+          timer.start(0); // Start the timer with 0 ms delay
+
+          // tool_button.showMenu();
           return tool_button;
         } catch (error) {
           MessageLog.trace(error);
