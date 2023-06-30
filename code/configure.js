@@ -192,6 +192,7 @@ function setEndFrame() {
 }
 
 function fastDebugger() {
+  MessageLog.clearLog();
   var EzRender = require("./ezrender.js").EzRender;
   var isi = new EzRender(packageInfo);
   isi.showAdvancedUI();

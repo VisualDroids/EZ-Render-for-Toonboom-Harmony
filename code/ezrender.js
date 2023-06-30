@@ -58,6 +58,12 @@ function EzRender(packageInfo) {
   // this.hookToolbar(); // Hook Toolbar UI to the Toonboom Harmony toolbar
   this.setupAdvancedUI(); // Setup Advanced UI
   this.refreshPresetsAndDisplays(); // Update Presets at startup | Needs both the toolbar ui & the advanced ui loaded
+
+  this.supportedFormats = {
+    mov: { title: ".mov (h264)" },
+    pngseq: { title: ".png (PNG Sequence)" },
+  };
+  // ["mov", "pngseq", "mkv"];
 }
 
 // EzRender.prototype = new QObject();
@@ -199,9 +205,11 @@ presetsObject.prototype.remove = function (presetName) {
 
 presetsObject.prototype.initPresetsFile = function () {
   var examplePresets = {
-    "Full HD PNG Sequence": {
+    1: {
+      preset_name: "Full HD PNG Sequence",
       render_enabled: false,
       render_tag: "Test",
+      aspect_ratio: "16:9",
       resolution_x: "1920",
       resolution_y: "1080",
       render_formats: {
@@ -210,9 +218,11 @@ presetsObject.prototype.initPresetsFile = function () {
         pngseq: true,
       },
     },
-    "Full HD mov": {
+    2: {
+      preset_name: "Full HD mov",
       render_enabled: false,
       render_tag: "Test",
+      aspect_ratio: "16:9",
       resolution_x: "1920",
       resolution_y: "1080",
       render_formats: {
@@ -221,9 +231,11 @@ presetsObject.prototype.initPresetsFile = function () {
         pngseq: false,
       },
     },
-    "Low res Test": {
+    3: {
+      preset_name: "Low res Test",
       render_enabled: true,
       render_tag: "Cleanup",
+      aspect_ratio: "16:9",
       resolution_x: "1280",
       resolution_y: "720",
       render_formats: {
@@ -667,6 +679,180 @@ EzRender.prototype.setupAdvancedUI = function () {
   this.ui.progress.goBack.clicked.connect(this, function () {
     this.ui.setCurrentWidget(this.ui.main);
   });
+
+  //////////// Presets Table Init ///////////////////
+  this.ui.main.presetBox.presetListWidget.setVisible(false); //////////////////////////////// deletear luego
+  this.ui.main.presetBox.presetsTable.itemChanged.connect(
+    this,
+    function (item) {
+      try {
+        this.ui.main.presetBox.presetsTable.blockSignals(true);
+
+        // MessageLog.trace(JSON.stringify(this.presets.data[item.row() + 1]));
+        var obj = this.presets.data;
+        var currentItem = {
+          row: item.row(),
+          column: item.column(),
+          checkState: item.checkState(),
+          itemText: item.text(),
+          // presetName: this.ui.main.presetBox.presetsTable
+          //   .item(item.row(), 1)
+          //   .text(),
+        };
+
+        // obj[presetName] = {
+        //   render_enabled: true,
+        //   render_tag: renderTag,
+        //   resolution_x: resX,
+        //   resolution_y: resY,
+        //   render_formats: {
+        //     mov: mov,
+        //     mp4: mp4,
+        //     pngseq: pngseq,
+        //   },
+        // };
+
+        // Render Enabled Checkbox
+        if (currentItem.column === 0) {
+          obj[currentItem.row + 1]["render_enabled"] =
+            currentItem.checkState === Qt.Checked;
+        }
+
+        // Store Render Name
+        if (currentItem.column === 1) {
+          obj[currentItem.row + 1]["preset_name"] = currentItem.itemText;
+        }
+
+        // Store Aspect Ratio
+        // Todo regular expresion check for unlocked and num:num format
+        if (currentItem.column === 2) {
+          obj[currentItem.row + 1]["aspect_ratio"] = currentItem.itemText;
+          if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+            var aspectRatio = currentItem.itemText.split(":");
+            MessageLog.trace(
+              Math.round(
+                (obj[currentItem.row + 1]["resolution_x"] * aspectRatio[1]) /
+                  aspectRatio[0]
+              )
+            );
+            obj[currentItem.row + 1]["resolution_y"] = String(
+              Math.round(
+                (obj[currentItem.row + 1]["resolution_x"] * aspectRatio[1]) /
+                  aspectRatio[0]
+              )
+            );
+            this.ui.main.presetBox.presetsTable
+              .item(currentItem.row, 4)
+              .setText(obj[currentItem.row + 1]["resolution_y"]);
+            this.ui.main.presetBox.presetsTable;
+          }
+        }
+
+        // Store Resolution Values
+        // If resolution format is incorrect, throw error and reset field
+        // if (!/^\d+x\d+$/.test(currentItem.itemText)) {
+        //   item.setText(
+        //     obj[currentItem.row + 1]["resolution_x"] +
+        //       "x" +
+        //       obj[currentItem.row + 1]["resolution_y"]
+        //   );
+        //   throw new Error(
+        //     'Invalid format! The string must be in the format "1920x1080" (two numbers separated by an "x").'
+        //   );
+        // }
+        // function calculateResolution(args) {
+        //   // Check if aspectRatio is in correct format
+        //   if (
+        //     !Array.isArray(args.aspectRatio) ||
+        //     args.aspectRatio.length !== 2
+        //   ) {
+        //     return "Invalid aspect ratio";
+        //   }
+
+        //   var aspectRatio = args.aspectRatio.map(Number); // Convert to numbers
+        //   var height = Number(args.height);
+        //   var width = Number(args.width);
+
+        //   if (isNaN(aspectRatio[0]) || isNaN(aspectRatio[1])) {
+        //     return "Invalid aspect ratio";
+        //   }
+
+        //   // Check if height and width are numbers
+        //   if (isNaN(height) && isNaN(width)) {
+        //     return "Height and width cannot be both undefined";
+        //   }
+
+        //   // If height is not a number, calculate it
+        //   if (isNaN(height)) {
+        //     return (width * aspectRatio[1]) / aspectRatio[0];
+        //   }
+
+        //   // If width is not a number, calculate it
+        //   if (isNaN(width)) {
+        //     return (height * aspectRatio[0]) / aspectRatio[1];
+        //   }
+
+        //   // If both are numbers, nothing to do
+        //   return "Nothing to do here";
+        // }
+
+        if (currentItem.column === 3) {
+          if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+            var aspectRatio =
+              obj[currentItem.row + 1]["aspect_ratio"].split(":");
+            obj[currentItem.row + 1]["resolution_x"] = currentItem.itemText;
+            obj[currentItem.row + 1]["resolution_y"] = String(
+              Math.round(
+                (currentItem.itemText * aspectRatio[1]) / aspectRatio[0]
+              )
+            );
+            this.ui.main.presetBox.presetsTable
+              .item(currentItem.row, 4)
+              .setText(obj[currentItem.row + 1]["resolution_y"]);
+          } else {
+            obj[currentItem.row + 1]["resolution_x"] = currentItem.itemText;
+          }
+        }
+
+        if (currentItem.column === 4) {
+          if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+            var aspectRatio =
+              obj[currentItem.row + 1]["aspect_ratio"].split(":");
+            obj[currentItem.row + 1]["resolution_y"] = currentItem.itemText;
+            obj[currentItem.row + 1]["resolution_x"] = String(
+              Math.round(
+                (currentItem.itemText * aspectRatio[0]) / aspectRatio[1]
+              )
+            );
+            this.ui.main.presetBox.presetsTable
+              .item(currentItem.row, 3)
+              .setText(obj[currentItem.row + 1]["resolution_x"]);
+          } else {
+            obj[currentItem.row + 1]["resolution_y"] = currentItem.itemText;
+          }
+        }
+
+        if (currentItem.column === 5) {
+          var editedFormats = currentItem.itemText.split(", ");
+
+          // MessageLog.trace(editedFormats);
+
+          for (var supportedFormat in this.supportedFormats) {
+            MessageLog.trace(editedFormats.indexOf(supportedFormat) > -1);
+            obj[currentItem.row + 1]["render_formats"][supportedFormat] =
+              editedFormats.indexOf(supportedFormat) > -1;
+          }
+        }
+      } catch (error) {
+        MessageBox.information(error);
+      }
+
+      this.presets.data = obj;
+
+      this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
+      this.ui.main.presetBox.presetsTable.blockSignals(false);
+    }
+  );
 };
 
 EzRender.prototype.showAdvancedUI = function () {
@@ -756,18 +942,241 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
   }
 
   var currentPresets = this.presets.data;
-  for (var preset in currentPresets) {
-    // Add item to the advanced ui preset list
-    var item = new QListWidgetItem(
-      preset,
-      this.ui.main.presetBox.presetListWidget
-    );
-    item.setCheckState(currentPresets[preset].render_enabled == true ? 2 : 0); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
-    this.ui.main.presetBox.presetListWidget.addItem(item);
+  // for (var preset in currentPresets) {
+  //   // Add item to the advanced ui preset list
+  //   var item = new QListWidgetItem(
+  //     preset,
+  //     this.ui.main.presetBox.presetListWidget
+  //   );
+  //   item.setCheckState(currentPresets[preset].render_enabled == true ? 2 : 0); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
+  //   this.ui.main.presetBox.presetListWidget.addItem(item);
 
-    // Add item to the toolbar ui preset list
-    // this.toolbarui.presetList.addItem(preset);
+  //   // Add item to the toolbar ui preset list
+  //   // this.toolbarui.presetList.addItem(preset);
+  // }
+
+  /////// PRESETS TABLE STUFF ///////
+  this.ui.main.presetBox.presetsTable.blockSignals(true);
+
+  this.ui.main.presetBox.presetsTable.clearContents(); // Clear advanced ui preset list
+
+  this.ui.main.presetBox.presetsTable.colCount = 4;
+  this.ui.main.presetBox.presetsTable.rowCount =
+    Object.keys(currentPresets).length;
+
+  // Update QTableWidget filling it with the presets
+  // for (var i = 0; i < Object.keys(currentPresets).length; i++) {
+  for (var preset in currentPresets) {
+    var currentTableIndex = preset - 1;
+    // var currentPreset = Object.keys(currentPresets)[i];
+
+    // Set the Row Height for each element
+    this.ui.main.presetBox.presetsTable.setRowHeight(
+      currentTableIndex,
+      UiLoader.dpiScale(25)
+    );
+
+    // Add a 'enabled' checkbox
+    // var checkbox = new QCheckBox();
+    // checkbox.setChecked(currentPresets[currentPreset].render_enabled);
+    // this.ui.main.presetBox.presetsTable.setCellWidget(i, 0, new QCheckBox());
+
+    // this.ui.main.presetBox.presetsTable
+    //   .cellWidget(i, 0)
+    //   .setChecked(currentPresets[currentPreset].render_enabled);
+
+    // MessageLog.trace(
+    //   this.ui.main.presetBox.presetsTable.cellWidget(i, 0).checked
+    // );
+
+    // this.ui.main.presetBox.presetsTable
+    //   .cellWidget(i, 0)
+    //   .stateChanged.connect(this, function (state) {
+
+    //     // MessageLog.trace(JSON.stringify(this.presets.data[currentPreset]));
+    //     // MessageLog.trace(this.ui.main.presetBox.presetsTable.item(i, 0));
+    //     // MessageLog.trace(this.presets.data[currentPreset].render_enabled);
+    //     // this.presets.data[currentPreset].render_enabled =
+    //     //   state === 2 ? true : false;
+    //     // MessageLog.trace(this.presets.data[currentPreset].render_enabled);
+    //   });
+
+    // Add Checkbox
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      0,
+      new QTableWidgetItem()
+    );
+
+    this.ui.main.presetBox.presetsTable
+      .item(currentTableIndex, 0)
+      .setCheckState(currentPresets[preset].render_enabled == true ? 2 : 0);
+
+    // Add Preset Name
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      1,
+      new QTableWidgetItem(currentPresets[preset]["preset_name"])
+    );
+
+    //////// ASPECT RATIO
+    function comboSuggestDelegate(itemsList) {
+      var suggester = new QStyledItemDelegate();
+      suggester.createEditor = function (parent, option, index) {
+        try {
+          var editor = new QComboBox(parent);
+          for (var i in itemsList) {
+            editor.addItem(itemsList[i]);
+          }
+          return editor;
+        } catch (error) {
+          MessageLog.trace(error);
+        }
+      };
+      return suggester;
+    }
+    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+      2,
+      comboSuggestDelegate([
+        "Unlocked",
+        "16:9",
+        "9:16",
+        "4:3",
+        "1:1",
+        "3:2",
+        "2.35:1",
+        "2.39:1",
+        "2.4:1",
+        "2.2:1",
+        "2.76:1",
+        "6:13",
+        "5:4",
+        "1.43:1",
+        "16:10",
+      ])
+    );
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      2,
+      new QTableWidgetItem(currentPresets[preset]["aspect_ratio"])
+    );
+
+    //////// RESOLUTION
+    var suggestedResolutions = {
+      height: ["8192", "4096", "3840", "2048", "1920", "1280", "720", "540"],
+      width: [
+        "4320",
+        "4096",
+        "2160",
+        "2048",
+        "1080",
+        "1024",
+        "720",
+        "576",
+        "540",
+        "480",
+      ],
+    };
+
+    function suggestDelegate(completerList) {
+      var suggester = new QStyledItemDelegate();
+      suggester.createEditor = function (parent, option, index) {
+        try {
+          var editor = new QLineEdit(parent);
+          var completer = new QCompleter(completerList, this);
+          validator = new QIntValidator();
+          editor.setValidator(validator);
+          editor.setCompleter(completer);
+          return editor;
+        } catch (error) {
+          MessageLog.trace(error);
+        }
+      };
+      return suggester;
+    }
+
+    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+      3,
+      suggestDelegate(suggestedResolutions.height)
+    );
+    // Add Preset Height Resolution (pure text)
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      3,
+      new QTableWidgetItem(currentPresets[preset]["resolution_x"])
+    );
+    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+      4,
+      suggestDelegate(suggestedResolutions.width)
+    );
+    // Add Preset Width Resolution
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      4,
+      new QTableWidgetItem(currentPresets[preset]["resolution_y"])
+    );
+
+    //////////////////// Formats
+    var formatList = [];
+    for (var format in currentPresets[preset]["render_formats"])
+      if (currentPresets[preset]["render_formats"][format])
+        formatList.push(format);
+
+    function formatsDelegate(list) {
+      var suggester = new QStyledItemDelegate();
+      suggester.createEditor = function (parent, option, index) {
+        try {
+          var enabledFormats = index.data(Qt.DisplayRole).split(", ");
+          var tool_button = new QToolButton(parent);
+          tool_button.text = index.data(Qt.DisplayRole);
+
+          var menu = new QMenu(parent);
+          for (var option in list) {
+            // Add actions and make them checkable
+            var action = menu.addAction(option);
+            action.checkable = true;
+            action.checked = enabledFormats.indexOf(option) > -1;
+          }
+          tool_button.setMenu(menu);
+          tool_button.popupMode = QToolButton.InstantPopup;
+          tool_button.showMenu();
+          return tool_button;
+        } catch (error) {
+          MessageLog.trace(error);
+        }
+      };
+      suggester.setEditorData = function (editor, index) {
+        var text = "";
+        var menu = editor.menu();
+        var actions = menu.actions();
+        for (var i = 0; i < actions.length; i++) {
+          if (actions[i].checked) {
+            if (text != "") text += ", ";
+            text += actions[i].text;
+          }
+        }
+        index.model().setData(index, text, Qt.EditRole);
+      };
+      return suggester;
+    }
+
+    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+      5,
+      formatsDelegate(this.supportedFormats)
+    );
+    // Add Preset Formats
+
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      5,
+      new QTableWidgetItem(formatList.join(", "))
+    );
   }
+  this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
+
+  this.ui.main.presetBox.presetsTable.blockSignals(false);
+  /////// END PRESETS TABLE STUFF ///////
+
   // this.toolbarui.presetList.adjustSize(); // Does not work for resizing toolbar
 };
 
