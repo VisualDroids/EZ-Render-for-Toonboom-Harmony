@@ -745,54 +745,6 @@ EzRender.prototype.setupAdvancedUI = function () {
           }
         }
 
-        // Store Resolution Values
-        // If resolution format is incorrect, throw error and reset field
-        // if (!/^\d+x\d+$/.test(currentItem.itemText)) {
-        //   item.setText(
-        //     obj[currentItem.row + 1]["resolution_x"] +
-        //       "x" +
-        //       obj[currentItem.row + 1]["resolution_y"]
-        //   );
-        //   throw new Error(
-        //     'Invalid format! The string must be in the format "1920x1080" (two numbers separated by an "x").'
-        //   );
-        // }
-        // function calculateResolution(args) {
-        //   // Check if aspectRatio is in correct format
-        //   if (
-        //     !Array.isArray(args.aspectRatio) ||
-        //     args.aspectRatio.length !== 2
-        //   ) {
-        //     return "Invalid aspect ratio";
-        //   }
-
-        //   var aspectRatio = args.aspectRatio.map(Number); // Convert to numbers
-        //   var height = Number(args.height);
-        //   var width = Number(args.width);
-
-        //   if (isNaN(aspectRatio[0]) || isNaN(aspectRatio[1])) {
-        //     return "Invalid aspect ratio";
-        //   }
-
-        //   // Check if height and width are numbers
-        //   if (isNaN(height) && isNaN(width)) {
-        //     return "Height and width cannot be both undefined";
-        //   }
-
-        //   // If height is not a number, calculate it
-        //   if (isNaN(height)) {
-        //     return (width * aspectRatio[1]) / aspectRatio[0];
-        //   }
-
-        //   // If width is not a number, calculate it
-        //   if (isNaN(width)) {
-        //     return (height * aspectRatio[0]) / aspectRatio[1];
-        //   }
-
-        //   // If both are numbers, nothing to do
-        //   return "Nothing to do here";
-        // }
-
         if (currentItem.column === 3) {
           if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
             var aspectRatio =
@@ -837,16 +789,42 @@ EzRender.prototype.setupAdvancedUI = function () {
               editedFormats.indexOf(supportedFormat) > -1;
           }
         }
+        if (currentItem.column === 6) {
+          obj[currentItem.row + 1]["filename_format"] = currentItem.itemText;
+        }
+
+        // Write presets data
+        this.presets.data = obj;
+
+        // Hacky method to force last header section to stretch to the end. setStretchLastSection doesnt work on tbh
+        for (
+          var i = 0;
+          i < this.ui.main.presetBox.presetsTable.columnCount - 1;
+          i++
+        ) {
+          this.ui.main.presetBox.presetsTable.resizeColumnToContents(i);
+        }
+
+        // Release signal blocking
+        this.ui.main.presetBox.presetsTable.blockSignals(false);
       } catch (error) {
         MessageBox.information(error);
       }
-
-      this.presets.data = obj;
-
-      this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
-      this.ui.main.presetBox.presetsTable.blockSignals(false);
     }
   );
+
+  // // Force the last header section to stretch to the end
+  // this.ui.main.presetBox.presetsTable
+  //   .horizontalHeader()
+  //   .sectionResized.connect(this, function () {
+  //     try {
+  //       this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
+  //       // this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = false;
+  //       // this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = true;
+  //     } catch (error) {
+  //       MessageLog.trace(error);
+  //     }
+  //   });
 };
 
 EzRender.prototype.showAdvancedUI = function () {
@@ -1125,11 +1103,12 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
           tool_button.text = index.data(Qt.DisplayRole);
 
           var menu = new QMenu(parent);
-          for (var option in list) {
+          for (var stuff in list) {
+            MessageLog.trace(stuff);
             // Add actions and make them checkable
-            var action = menu.addAction(option);
+            var action = menu.addAction(stuff);
             action.checkable = true;
-            action.checked = enabledFormats.indexOf(option) > -1;
+            action.checked = enabledFormats.indexOf(stuff) > -1;
           }
 
           // Connect 'triggered' signal to a function that updates the text of the tool_button
@@ -1188,27 +1167,94 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       new QTableWidgetItem(formatList.join(", "))
     );
 
-    function tagDelegate(tagList) {
+    function tagDelegate(tagsList) {
       var delegate = new QStyledItemDelegate();
 
       delegate.createEditor = function (parent, option, index) {
-        var editor = new QLineEdit(parent);
-        var completer = new QCompleter(tagList, editor);
-        completer.caseSensitivity = Qt.CaseInsensitive;
-        completer.completionMode = QCompleter.InlineCompletion;
-        editor.setCompleter(completer);
-        return editor;
-      };
+        try {
+          var editor = new QWidget(parent);
+          var layout = new QHBoxLayout(editor);
+          // function CustomLineEdit(parent) {
+          //   QLineEdit.call(this, parent);
+          // }
+          // CustomLineEdit.prototype = new QLineEdit();
+          // CustomLineEdit.prototype.focusOutEvent = function (e) {
+          //   try {
+          //     delegate.setModelData(editor, parent.model(), index);
+          //   } catch (error) {
+          //     MessageLog.trace(error);
+          //   }
+          // };
+          // var lineEdit = new CustomLineEdit(parent);
+          var lineEdit = new QLineEdit(parent);
+          var comboBox = new QComboBox(parent);
 
-      delegate.setEditorData = function (editor, index) {
+          comboBox.addItems(tagsList);
+          comboBox.activated.connect(function (index) {
+            var tag = comboBox.itemText(index);
+            lineEdit.text += tag;
+          });
+
+          // lineEdit.focusOutEvent = function (e) {
+          //   try {
+          //     MessageLog.trace("Hola");
+          //     delegate.setModelData(editor, parent.parent().model(), index);
+          //     editor.hide();
+          //   } catch (error) {
+          //     MessageLog.trace(error);
+          //   }
+          // };
+
+          // Commit the editing when lineEdit loses focus
+          // lineEdit.editingFinished.connect(function () {
+          //   try {
+          //     delegate.commitData.emit(editor);
+          //     delegate.closeEditor.emit(editor);
+          //   } catch (error) {
+          //     MessageLog.trace(error);
+          //   }
+          // });
+          // lineEdit.editingFinished.connect(function () {
+          //   var returnPressEvent = new QKeyEvent(
+          //     QEvent.KeyPress,
+          //     Qt.Key_Return,
+          //     Qt.NoModifier
+          //   );
+          //   QCoreApplication.postEvent(lineEdit, returnPressEvent);
+          // });
+
+          // // Use QTimer to set focus with a delay
+          // var timer = new QTimer();
+          // timer.singleShot = true;
+          // timer.timeout.connect(function () {
+          //   lineEdit.setFocus();
+          //   timer.deleteLater();
+          // });
+          // timer.start(0);
+
+          layout.addWidget(lineEdit, 1, 1); // Layout will give more space to the editor
+          layout.addWidget(comboBox, 0, 1); // Assign a lower stretch factor to comboBox
+
+          editor.minimumWidth = 200;
+          layout.setContentsMargins(0, 0, 0, 0);
+          layout.setSpacing(0);
+
+          editor.setLayout(layout);
+
+          return editor;
+        } catch (error) {
+          MessageLog.trace(error);
+        }
+      };
+      delegate.setEditorData = function (editorWidget, index) {
         var value = index.model().data(index, Qt.EditRole);
+        var editor = editorWidget.layout().itemAt(0).widget();
         editor.text = value;
       };
-
-      delegate.setModelData = function (editor, model, index) {
+      delegate.setModelData = function (editorWidget, model, index) {
+        var editor = editorWidget.layout().itemAt(0).widget();
         model.setData(index, editor.text, Qt.EditRole);
       };
-
       return delegate;
     }
 
@@ -1225,7 +1271,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
   }
 
   this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
-
+  this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = true;
   this.ui.main.presetBox.presetsTable.blockSignals(false);
   /////// END PRESETS TABLE STUFF ///////
 
