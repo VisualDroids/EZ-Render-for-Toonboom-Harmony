@@ -21,7 +21,7 @@
     <item>
      <widget class="QGroupBox" name="presetBox">
       <property name="title">
-       <string>1: Choose a Preset</string>
+       <string>1: Presets</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
        <property name="sizeConstraint">
@@ -183,7 +183,7 @@
       <item>
        <widget class="QGroupBox" name="displayBox">
         <property name="title">
-         <string>2: Choose a Display Output Node</string>
+         <string>2: Display</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -210,12 +210,12 @@
            </column>
            <column>
             <property name="text">
-             <string>Display</string>
+             <string>Name</string>
             </property>
            </column>
            <column>
             <property name="text">
-             <string>Connected</string>
+             <string>Linked</string>
             </property>
            </column>
            <column>
@@ -223,30 +223,6 @@
              <string>Location</string>
             </property>
            </column>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="displaySelector">
-           <property name="selectionMode">
-            <enum>QAbstractItemView::SingleSelection</enum>
-           </property>
-           <property name="resizeMode">
-            <enum>QListView::Adjust</enum>
-           </property>
-           <property name="spacing">
-            <number>2</number>
-           </property>
-           <property name="viewMode">
-            <enum>QListView::ListMode</enum>
-           </property>
-           <item>
-            <property name="text">
-             <string>Nuevo elemento</string>
-            </property>
-            <property name="checkState">
-             <enum>Checked</enum>
-            </property>
-           </item>
           </widget>
          </item>
         </layout>

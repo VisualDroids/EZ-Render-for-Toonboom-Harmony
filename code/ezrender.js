@@ -57,7 +57,7 @@ function EzRender(packageInfo) {
   // this.setupToolbarUI(); // Setup Toolbar UI
   // this.hookToolbar(); // Hook Toolbar UI to the Toonboom Harmony toolbar
   this.setupAdvancedUI(); // Setup Advanced UI
-  this.refreshPresetsAndDisplays(); // Update Presets at startup | Needs both the toolbar ui & the advanced ui loaded
+  // this.refreshPresetsAndDisplays(); // Update Presets at startup | Needs both the toolbar ui & the advanced ui loaded
 
   this.supportedFormats = {
     mov: { title: ".mov (h264)" },
@@ -365,29 +365,29 @@ EzRender.prototype.setupAdvancedUI = function () {
 
   // Make list checkable for selecting multiple presets
   // this.ui.main.presetBox.presetListWidget.flags = Qt.ItemIsUserCheckable;
-  this.ui.main.displayBox.displaySelector.flags = Qt.ItemIsUserCheckable;
+  // this.ui.main.displayBox.displaySelector.flags = Qt.ItemIsUserCheckable;
 
   // Show display nodes in Display box
   // scene.getDefaultDisplay()
 
-  this.ui.main.displayBox.displaySelector.itemChanged.connect(
-    this,
-    function (currentItem) {
-      var currentDisplayNodePath = currentItem.text();
-      var currentDisplayNodeEnabled = currentItem.checkState() == Qt.Checked;
+  // this.ui.main.displayBox.displaySelector.itemChanged.connect(
+  //   this,
+  //   function (currentItem) {
+  //     var currentDisplayNodePath = currentItem.text();
+  //     var currentDisplayNodeEnabled = currentItem.checkState() == Qt.Checked;
 
-      this.log(
-        "Display cambio: " +
-          currentDisplayNodePath +
-          " > " +
-          currentDisplayNodeEnabled
-      );
-      node.setEnable(currentDisplayNodePath, currentDisplayNodeEnabled);
-      this.displayNodes[currentDisplayNodePath] = {};
-      this.displayNodes[currentDisplayNodePath].enabled =
-        currentDisplayNodeEnabled;
-    }
-  );
+  //     this.log(
+  //       "Display cambio: " +
+  //         currentDisplayNodePath +
+  //         " > " +
+  //         currentDisplayNodeEnabled
+  //     );
+  //     node.setEnable(currentDisplayNodePath, currentDisplayNodeEnabled);
+  //     this.displayNodes[currentDisplayNodePath] = {};
+  //     this.displayNodes[currentDisplayNodePath].enabled =
+  //       currentDisplayNodeEnabled;
+  //   }
+  // );
 
   // // Connect signals to functions
   // ----------- Add Preset Signal ----------- //
@@ -1122,22 +1122,6 @@ EzRender.prototype.refreshUIDisplayNodes = function () {
 
 EzRender.prototype.refreshPresetsAndDisplays = function () {
   MessageLog.trace("Refreshing tables");
-  // this.ui.main.presetBox.presetListWidget.clear(); // Clear advanced ui preset list
-  // this.toolbarui.presetList.clear(); // Clear Toolbar preset list
-
-  // this.ui.main.displayBox.displaySelector.clear(); // Clear advanced ui display list
-
-  var currentDisplayNodes = this.getselectedDisplayNodes();
-  for (var displayNode in currentDisplayNodes) {
-    var item = new QListWidgetItem(
-      currentDisplayNodes[displayNode],
-      this.ui.main.displayBox.displaySelector
-    );
-    item.setCheckState(
-      node.getEnable(currentDisplayNodes[displayNode]) == true ? 2 : 0
-    ); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
-    this.ui.main.displayBox.displaySelector.addItem(item);
-  }
 
   var currentPresets = this.presets.data;
 
@@ -1146,22 +1130,10 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
 
   this.ui.main.displayBox.displaysTable.clearContents(); // Clear advanced ui preset list
 
+  var currentDisplayNodes = this.getselectedDisplayNodes();
+
   this.ui.main.displayBox.displaysTable.rowCount =
     Object.keys(currentDisplayNodes).length; // QTableWidget requires rowCount to be set manually
-
-  // var currentDisplayNodes = this.getselectedDisplayNodes();
-  // for (var displayNode in currentDisplayNodes) {
-  //   var item = new QListWidgetItem(
-  //     currentDisplayNodes[displayNode],
-  //     this.ui.main.displayBox.displaySelector
-  //   );
-  //   item.setCheckState(
-  //     node.getEnable(currentDisplayNodes[displayNode]) == true ? 2 : 0
-  //   ); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
-  //   this.ui.main.displayBox.displaySelector.addItem(item);
-  // }
-
-  var currentDisplayNodes = this.getselectedDisplayNodes();
 
   for (var displayNode in currentDisplayNodes) {
     // Set the Row Height for each element
@@ -1590,46 +1562,59 @@ EzRender.prototype.renderEngine = function () {
     this.createFolder(this.outputFolder); // Create output folder in case that it had disappeared misteriously
 
     var renderPresets = this.presets.data;
-    var renderDisplays = [];
-    var enabledPresets = [];
+    var enabledDisplays = {};
+    var enabledPresets = {};
     var progressWidget;
 
     // Simple mode renders a single preset selected from the toolbar ui and the
     if (this.renderMode == "Simple") {
       // progressWidget = this.toolbarui;
-      renderDisplays.push(scene.getDefaultDisplay());
+      enabledDisplays.push(scene.getDefaultDisplay());
       enabledPresets.push(this.selectedPreset);
     }
     // Advanced mode renders all enabled presets and the display node selected from the advanced ui
     else if (this.renderMode == "Advanced") {
       progressWidget = this.ui.progress;
 
-      for (var displayNode in this.displayNodes) {
-        if (this.displayNodes[displayNode].enabled) {
-          renderDisplays.push(displayNode);
+      var displayNodes = this.getselectedDisplayNodes();
+      var index = 0;
+      for (var displayNode in displayNodes) {
+        if (node.getEnable(displayNodes[displayNode])) {
+          enabledDisplays[index] = {
+            name: node.getName(displayNodes[displayNode]),
+            path: displayNodes[displayNode],
+          };
         }
+        index++;
       }
+
+      var index = 0;
       for (var preset in renderPresets) {
         if (renderPresets[preset].render_enabled) {
-          enabledPresets.push(preset);
+          enabledPresets[index] = renderPresets[preset];
         }
+        index++;
       }
     }
 
     for (var preset in enabledPresets) {
-      for (var renderDisplay in renderDisplays) {
-        var currentDisplay = renderDisplays[renderDisplay];
-        var currentPreset = enabledPresets[preset]; // Because it's a list, "preset" is an index
+      for (var renderDisplay in enabledDisplays) {
+        var currentDisplay = enabledDisplays[renderDisplay];
+        var currentPreset = enabledPresets[preset];
 
         var renderOutputFolder = this.outputFolder;
+        MessageLog.trace(renderOutputFolder);
+
         var renderFullOutputPath =
           renderOutputFolder +
           "/" +
           scene.currentScene() +
           "-" +
-          renderPresets[currentPreset].render_tag +
+          currentPreset.render_tag +
           "-" +
-          currentDisplay.split("/").pop();
+          currentDisplay.name;
+
+        MessageLog.trace(renderFullOutputPath);
 
         if (this.renderMode == "Advanced") {
           this.log(
@@ -1647,25 +1632,30 @@ EzRender.prototype.renderEngine = function () {
             " display...";
         }
 
-        if (renderPresets[currentPreset].render_formats.mov) {
+        MessageLog.trace(JSON.stringify(currentPreset));
+
+        if (currentPreset.render_formats.mov) {
+          MessageLog.trace("renderiseichon mov");
           this.movRenderer.call(
             this,
             // renderFullOutputPath + "-" + this.getCurrentDateTime() + ".mov",
             this.versionedPath(renderFullOutputPath + ".mov"),
-            renderPresets[currentPreset].resolution_x,
-            renderPresets[currentPreset].resolution_y,
-            currentDisplay.split("/").pop(),
+            currentPreset.resolution_x,
+            currentPreset.resolution_y,
+            currentDisplay.name,
             progressWidget
           );
         }
-        if (renderPresets[currentPreset].render_formats.pngseq) {
+        if (currentPreset.render_formats.pngseq) {
+          MessageLog.trace("renderiseichon pngseq");
+
           this.pngRenderer.call(
             this,
             // renderFullOutputPath + "-" + this.getCurrentDateTime(),
             this.versionedPath(renderFullOutputPath),
-            renderPresets[currentPreset].resolution_x,
-            renderPresets[currentPreset].resolution_y,
-            currentDisplay,
+            currentPreset.resolution_x,
+            currentPreset.resolution_y,
+            currentDisplay.path,
             progressWidget
           );
         }
@@ -1677,7 +1667,7 @@ EzRender.prototype.renderEngine = function () {
       this.openFolder.call(this, this.outputFolder);
     }
   } catch (error) {
-    this.log(error);
+    MessageLog.trace(error);
   }
 };
 
