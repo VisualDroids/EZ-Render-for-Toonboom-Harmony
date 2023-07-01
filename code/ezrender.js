@@ -364,7 +364,7 @@ EzRender.prototype.setupAdvancedUI = function () {
   this.ui.main.renderOutputBox.outputPath.setText(this.outputFolder);
 
   // Make list checkable for selecting multiple presets
-  this.ui.main.presetBox.presetListWidget.flags = Qt.ItemIsUserCheckable;
+  // this.ui.main.presetBox.presetListWidget.flags = Qt.ItemIsUserCheckable;
   this.ui.main.displayBox.displaySelector.flags = Qt.ItemIsUserCheckable;
 
   // Show display nodes in Display box
@@ -555,56 +555,56 @@ EzRender.prototype.setupAdvancedUI = function () {
       }
     }
   );
-  this.ui.main.presetBox.presetListWidget.itemClicked.connect(
-    this,
-    function (item) {
-      var renderPresets = this.presets.data;
+  // this.ui.main.presetBox.presetListWidget.itemClicked.connect(
+  //   this,
+  //   function (item) {
+  //     var renderPresets = this.presets.data;
 
-      try {
-        this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setHidden(
-          false
-        );
-        this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setHidden(
-          false
-        );
-        this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setHidden(
-          false
-        );
-        this.ui.main.presetBox.presetInfoBox.presetInfoMov.setHidden(false);
-        this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setHidden(false);
-        this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setText(
-          '"' + item.text() + '"'
-        );
-        this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setText(
-          "Render Tag: " + renderPresets[item.text()].render_tag
-        );
-        this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setText(
-          "Resolution: " +
-            renderPresets[item.text()].resolution_x +
-            "x" +
-            renderPresets[item.text()].resolution_y
-        );
-        this.ui.main.presetBox.presetInfoBox.presetInfoMov.setChecked(
-          renderPresets[item.text()].render_formats.mov
-        );
-        this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setChecked(
-          renderPresets[item.text()].render_formats.pngseq
-        );
-      } catch (error) {
-        this.log(error);
-      }
-    }
-  );
-  this.ui.main.presetBox.presetListWidget.itemChanged.connect(
-    this,
-    function (item) {
-      // una hora de investigacion, transforma la respuesta de check state (que es checked, not checked, partially checked) en un booleano)
-      this.presets.edit(
-        (presetName = item.text()),
-        (renderEnabled = item.checkState() == Qt.Checked)
-      );
-    }
-  );
+  //     try {
+  //       this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setHidden(
+  //         false
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setHidden(
+  //         false
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setHidden(
+  //         false
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetInfoMov.setHidden(false);
+  //       this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setHidden(false);
+  //       this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setText(
+  //         '"' + item.text() + '"'
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setText(
+  //         "Render Tag: " + renderPresets[item.text()].render_tag
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setText(
+  //         "Resolution: " +
+  //           renderPresets[item.text()].resolution_x +
+  //           "x" +
+  //           renderPresets[item.text()].resolution_y
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetInfoMov.setChecked(
+  //         renderPresets[item.text()].render_formats.mov
+  //       );
+  //       this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setChecked(
+  //         renderPresets[item.text()].render_formats.pngseq
+  //       );
+  //     } catch (error) {
+  //       this.log(error);
+  //     }
+  //   }
+  // );
+  // this.ui.main.presetBox.presetListWidget.itemChanged.connect(
+  //   this,
+  //   function (item) {
+  //     // una hora de investigacion, transforma la respuesta de check state (que es checked, not checked, partially checked) en un booleano)
+  //     this.presets.edit(
+  //       (presetName = item.text()),
+  //       (renderEnabled = item.checkState() == Qt.Checked)
+  //     );
+  //   }
+  // );
 
   this.ui.main.frameBox.setStartFrameButton.clicked.connect(this, function () {
     scene.setStartFrame(frame.current());
@@ -631,36 +631,36 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.ui.progress.progressText.text = "Render complete 😊";
   });
 
-  // Disable some buttons if no presets are selected
-  this.ui.main.presetBox.presetListWidget.itemSelectionChanged.connect(
-    this,
-    function () {
-      var enablebuttons =
-        this.ui.main.presetBox.presetListWidget.selectedItems() == ""
-          ? false
-          : true;
-      // this.ui.main.presetBox.presetInfoBox.setVisible(enablebuttons);
-      // this.ui.main.presetBox.buttonDeletePreset.setEnabled(enablebuttons);
-      // this.ui.main.presetBox.buttonEditPreset.setEnabled(enablebuttons);
-      // this.ui.main.presetBox.buttonDuplPreset.setEnabled(enablebuttons);
-      this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setVisible(
-        enablebuttons
-      );
-      this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setVisible(
-        enablebuttons
-      );
-      this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setVisible(
-        enablebuttons
-      );
-      this.ui.main.presetBox.presetInfoBox.presetInfoMov.setVisible(
-        enablebuttons
-      );
-      this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setVisible(
-        enablebuttons
-      );
-    }
-  );
-  this.ui.main.presetBox.presetListWidget.itemSelectionChanged(); // Emit the signal on window creation so it checks if the buttons should be enabled
+  // // Disable some buttons if no presets are selected
+  // this.ui.main.presetBox.presetListWidget.itemSelectionChanged.connect(
+  //   this,
+  //   function () {
+  //     var enablebuttons =
+  //       this.ui.main.presetBox.presetListWidget.selectedItems() == ""
+  //         ? false
+  //         : true;
+  //     // this.ui.main.presetBox.presetInfoBox.setVisible(enablebuttons);
+  //     // this.ui.main.presetBox.buttonDeletePreset.setEnabled(enablebuttons);
+  //     // this.ui.main.presetBox.buttonEditPreset.setEnabled(enablebuttons);
+  //     // this.ui.main.presetBox.buttonDuplPreset.setEnabled(enablebuttons);
+  //     this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setVisible(
+  //       enablebuttons
+  //     );
+  //     this.ui.main.presetBox.presetInfoBox.presetTagInfoLabel.setVisible(
+  //       enablebuttons
+  //     );
+  //     this.ui.main.presetBox.presetInfoBox.presetResInfoLabel.setVisible(
+  //       enablebuttons
+  //     );
+  //     this.ui.main.presetBox.presetInfoBox.presetInfoMov.setVisible(
+  //       enablebuttons
+  //     );
+  //     this.ui.main.presetBox.presetInfoBox.presetInfoPNG.setVisible(
+  //       enablebuttons
+  //     );
+  //   }
+  // );
+  // this.ui.main.presetBox.presetListWidget.itemSelectionChanged(); // Emit the signal on window creation so it checks if the buttons should be enabled
 
   // Give it some STYLE
   this.ui.main.buttonRender.setStyleSheet("color: white; border-radius: 5px;");
@@ -802,7 +802,7 @@ EzRender.prototype.setupAdvancedUI = function () {
   });
 
   //////////// Presets Table Setup ///////////////////
-  this.ui.main.presetBox.presetListWidget.setVisible(false);
+  // this.ui.main.presetBox.presetListWidget.setVisible(false);
   this.ui.main.presetBox.presetsTable.itemChanged.connect(
     this,
     function (item) {
@@ -922,6 +922,134 @@ EzRender.prototype.setupAdvancedUI = function () {
       }
     }
   );
+  //////////// Presets Table Setup ///////////////////
+  this.ui.main.displayBox.displaysTable.itemChanged.connect(
+    this,
+    function (item) {
+      try {
+        this.ui.main.displayBox.displaysTable.blockSignals(true);
+
+        var currentDisplayNodes = this.getselectedDisplayNodes();
+
+        var currentItem = {
+          row: item.row(),
+          column: item.column(),
+          checkState: item.checkState(),
+          itemText: item.text(),
+          // presetName: this.ui.main.presetBox.presetsTable
+          //   .item(item.row(), 1)
+          //   .text(),
+        };
+        // Change Display Enabled
+        if (currentItem.column === 0) {
+          node.setEnable(
+            currentDisplayNodes[currentItem.row],
+            currentItem.checkState === Qt.Checked
+          );
+        }
+        // Change Display Node Name
+        if (currentItem.column === 1) {
+          if (
+            !node.rename(
+              currentDisplayNodes[currentItem.row],
+              currentItem.itemText.split(" ").join("_")
+            )
+          ) {
+            this.ui.main.displayBox.displaysTable
+              .item(currentItem.row, 1)
+              .setText(node.getName(currentDisplayNodes[currentItem.row]));
+          } else {
+            this.ui.main.displayBox.displaysTable
+              .item(currentItem.row, 1)
+              .setText(currentItem.itemText.split(" ").join("_"));
+          }
+
+          // node.getNodes(["DISPLAY"])[0].name = "test";
+          // currentDisplayNodes[currentItem.row].setName(currentItem.itemText);
+        }
+        //       // Store Aspect Ratio
+        //       // Todo regular expresion check for unlocked and num:num format
+        //       if (currentItem.column === 2) {
+        //         obj[currentItem.row + 1]["aspect_ratio"] = currentItem.itemText;
+        //         if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+        //           var aspectRatio = currentItem.itemText.split(":");
+        //           obj[currentItem.row + 1]["resolution_y"] = String(
+        //             Math.round(
+        //               (obj[currentItem.row + 1]["resolution_x"] * aspectRatio[1]) /
+        //                 aspectRatio[0]
+        //             )
+        //           );
+        //           this.ui.main.presetBox.presetsTable
+        //             .item(currentItem.row, 4)
+        //             .setText(obj[currentItem.row + 1]["resolution_y"]);
+        //           this.ui.main.presetBox.presetsTable;
+        //         }
+        //       }
+        //       // Store Resolution Width
+        //       if (currentItem.column === 3) {
+        //         if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+        //           var aspectRatio =
+        //             obj[currentItem.row + 1]["aspect_ratio"].split(":");
+        //           obj[currentItem.row + 1]["resolution_x"] = currentItem.itemText;
+        //           obj[currentItem.row + 1]["resolution_y"] = String(
+        //             Math.round(
+        //               (currentItem.itemText * aspectRatio[1]) / aspectRatio[0]
+        //             )
+        //           );
+        //           this.ui.main.presetBox.presetsTable
+        //             .item(currentItem.row, 4)
+        //             .setText(obj[currentItem.row + 1]["resolution_y"]);
+        //         } else {
+        //           obj[currentItem.row + 1]["resolution_x"] = currentItem.itemText;
+        //         }
+        //       }
+        //       // Store Resolution Height
+        //       if (currentItem.column === 4) {
+        //         if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
+        //           var aspectRatio =
+        //             obj[currentItem.row + 1]["aspect_ratio"].split(":");
+        //           obj[currentItem.row + 1]["resolution_y"] = currentItem.itemText;
+        //           obj[currentItem.row + 1]["resolution_x"] = String(
+        //             Math.round(
+        //               (currentItem.itemText * aspectRatio[0]) / aspectRatio[1]
+        //             )
+        //           );
+        //           this.ui.main.presetBox.presetsTable
+        //             .item(currentItem.row, 3)
+        //             .setText(obj[currentItem.row + 1]["resolution_x"]);
+        //         } else {
+        //           obj[currentItem.row + 1]["resolution_y"] = currentItem.itemText;
+        //         }
+        //       }
+        //       // Store Selected Formats
+        //       if (currentItem.column === 5) {
+        //         var editedFormats = currentItem.itemText.split(", ");
+        //         for (var supportedFormat in this.supportedFormats) {
+        //           obj[currentItem.row + 1]["render_formats"][supportedFormat] =
+        //             editedFormats.indexOf(supportedFormat) > -1;
+        //         }
+        //       }
+        //       // Store Filename Format
+        //       if (currentItem.column === 6) {
+        //         obj[currentItem.row + 1]["filename_format"] = currentItem.itemText;
+        //       }
+        //       // Write presets data
+        //       this.presets.data = obj;
+        // Hacky method to force last header section to stretch to the end. setStretchLastSection doesnt work on tbh
+        for (
+          var i = 0;
+          i < this.ui.main.displayBox.displaysTable.columnCount - 1;
+          i++
+        ) {
+          this.ui.main.displayBox.displaysTable.resizeColumnToContents(i);
+        }
+        // Release signal blocking
+        this.ui.main.displayBox.displaysTable.blockSignals(false);
+      } catch (error) {
+        MessageBox.information(error);
+      }
+    }
+  );
 };
 
 EzRender.prototype.showAdvancedUI = function () {
@@ -997,7 +1125,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
   // this.ui.main.presetBox.presetListWidget.clear(); // Clear advanced ui preset list
   // this.toolbarui.presetList.clear(); // Clear Toolbar preset list
 
-  this.ui.main.displayBox.displaySelector.clear(); // Clear advanced ui display list
+  // this.ui.main.displayBox.displaySelector.clear(); // Clear advanced ui display list
 
   var currentDisplayNodes = this.getselectedDisplayNodes();
   for (var displayNode in currentDisplayNodes) {
@@ -1013,7 +1141,88 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
 
   var currentPresets = this.presets.data;
 
-  /////// PRESETS TABLE STUFF ///////
+  /////////////////////////////////// DISPLAYS TABLE STUFF ///////////////////////////////////
+  this.ui.main.displayBox.displaysTable.blockSignals(true);
+
+  this.ui.main.displayBox.displaysTable.clearContents(); // Clear advanced ui preset list
+
+  this.ui.main.displayBox.displaysTable.rowCount =
+    Object.keys(currentDisplayNodes).length; // QTableWidget requires rowCount to be set manually
+
+  // var currentDisplayNodes = this.getselectedDisplayNodes();
+  // for (var displayNode in currentDisplayNodes) {
+  //   var item = new QListWidgetItem(
+  //     currentDisplayNodes[displayNode],
+  //     this.ui.main.displayBox.displaySelector
+  //   );
+  //   item.setCheckState(
+  //     node.getEnable(currentDisplayNodes[displayNode]) == true ? 2 : 0
+  //   ); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
+  //   this.ui.main.displayBox.displaySelector.addItem(item);
+  // }
+
+  var currentDisplayNodes = this.getselectedDisplayNodes();
+
+  for (var displayNode in currentDisplayNodes) {
+    // Set the Row Height for each element
+    this.ui.main.displayBox.displaysTable.setRowHeight(
+      displayNode,
+      UiLoader.dpiScale(25)
+    );
+
+    //////// DISPLAY ENABLED CHECKBOX
+    this.ui.main.displayBox.displaysTable.setItem(
+      displayNode,
+      0,
+      new QTableWidgetItem()
+    );
+    this.ui.main.displayBox.displaysTable
+      .item(displayNode, 0)
+      .setCheckState(
+        node.getEnable(currentDisplayNodes[displayNode]) == true ? 2 : 0
+      );
+
+    //////// DISPLAY NAME
+    this.ui.main.displayBox.displaysTable.setItem(
+      displayNode,
+      1,
+      new QTableWidgetItem(node.getName(currentDisplayNodes[displayNode]))
+    );
+
+    //////// DISPLAY PLUGGED IN
+    // var displayPath = displayPath.join("/");
+    var displayPluggedItem = new QTableWidgetItem(
+      node.isLinked(currentDisplayNodes[displayNode], 0) ? "✓" : "✕"
+    );
+    displayPluggedItem.setTextAlignment(Qt.AlignCenter);
+    this.ui.main.displayBox.displaysTable.setItem(
+      displayNode,
+      2,
+      displayPluggedItem
+    );
+
+    //////// DISPLAY PATH
+    var displayPath = currentDisplayNodes[displayNode].split("/");
+    displayPath.pop();
+    var displayPath = displayPath.join("/");
+    this.ui.main.displayBox.displaysTable.setItem(
+      displayNode,
+      3,
+      new QTableWidgetItem(displayPath)
+    );
+  }
+
+  for (
+    var i = 0;
+    i < this.ui.main.displayBox.displaysTable.columnCount - 1;
+    i++
+  ) {
+    this.ui.main.displayBox.displaysTable.resizeColumnToContents(i);
+  }
+
+  this.ui.main.displayBox.displaysTable.blockSignals(false);
+
+  /////////////////////////////////// PRESETS TABLE STUFF ///////////////////////////////////
   this.ui.main.presetBox.presetsTable.blockSignals(true); // Block signals to avoid recursivity
 
   this.ui.main.presetBox.presetsTable.clearContents(); // Clear advanced ui preset list
