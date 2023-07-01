@@ -195,12 +195,46 @@ presetsObject.prototype.edit = function (
   this.data = obj;
 };
 
-presetsObject.prototype.remove = function (presetName) {
+presetsObject.prototype.remove = function (indexToRemove) {
+  indexToRemove++; // Translating from table to object. Table begins at 0, object begins at 1
+
   var obj = this.data;
-  if (!obj.hasOwnProperty(presetName))
-    throw new Error('Preset "' + presetName + '" not found');
-  delete obj[presetName];
-  this.data = obj;
+  if (!obj.hasOwnProperty(indexToRemove))
+    throw new Error('Preset with index #"' + indexToRemove + '" not found');
+
+  delete obj[indexToRemove];
+
+  var newObj = {};
+  var newIndex = 1;
+
+  for (var i in obj) {
+    if (obj.hasOwnProperty(i)) {
+      newObj[newIndex] = obj[i];
+      newIndex++;
+    }
+  }
+
+  this.data = newObj;
+
+  // var obj = this.data;
+  // if (!obj.hasOwnProperty(indexToRemove))
+  //   throw new Error('Preset with index #"' + indexToRemove + '" not found');
+  // delete obj[indexToRemove];
+  // this.data = obj;
+
+  // var obj = this.data;
+  // var newObj = {};
+  // for(var prop in obj) {
+  //     var index = parseInt(prop);
+  //     if(index < indexToRemove) {
+  //         // If the index is less than the index to remove, copy the property as is
+  //         newObj[prop] = obj[prop];
+  //     } else if(index > indexToRemove) {
+  //         // If the index is greater than the index to remove, reduce it by 1 and copy the property
+  //         newObj[index - 1] = obj[prop];
+  //     } // If the index equals to the index to remove, skip it
+  // }
+  // this.data = newObj;
 };
 
 presetsObject.prototype.initPresetsFile = function () {
@@ -308,9 +342,9 @@ EzRender.prototype.setupAdvancedUI = function () {
   this.ui.main.presetBox.buttonDeletePreset.icon = new QIcon(
     this.packageInfo.packageFolder + "/icons/remove.png"
   );
-  this.ui.main.presetBox.buttonEditPreset.icon = new QIcon(
-    this.packageInfo.packageFolder + "/icons/edit.png"
-  );
+  // this.ui.main.presetBox.buttonEditPreset.icon = new QIcon(
+  //   this.packageInfo.packageFolder + "/icons/edit.png"
+  // );
   this.ui.main.presetBox.buttonDuplPreset.icon = new QIcon(
     this.packageInfo.packageFolder + "/icons/duplicate.png"
   );
@@ -358,57 +392,141 @@ EzRender.prototype.setupAdvancedUI = function () {
   // // Connect signals to functions
   // ----------- Add Preset Signal ----------- //
   this.ui.main.presetBox.buttonAddPreset.clicked.connect(this, function () {
-    this.editMode = "add";
-    this.presetEditUI.call(this); // Add functionality to edit preset button
-  });
-  // ----------- Edit Preset Signal ----------- //
-  this.ui.main.presetBox.buttonEditPreset.clicked.connect(this, function () {
-    this.editMode = "edit";
-    this.selectedPreset = this.ui.main.presetBox.presetListWidget
-      .currentItem()
-      .text();
-    this.presetEditUI.call(this); // Add functionality to edit preset button
-  });
-  this.ui.main.presetBox.presetListWidget.itemDoubleClicked.connect(
-    this,
-    function () {
-      this.editMode = "edit";
-      this.selectedPreset = this.ui.main.presetBox.presetListWidget
-        .currentItem()
-        .text();
-      this.presetEditUI.call(this); // Add functionality to edit preset button
+    try {
+      MessageLog.trace("hola");
+      var obj = this.presets.data;
+      var newIndex = Object.keys(obj).length + 1;
+      obj[newIndex] = {};
+      obj[newIndex]["render_enabled"] = false;
+      obj[newIndex]["preset_name"] = "New Preset";
+      obj[newIndex]["aspect_ratio"] = "Unlocked";
+      obj[newIndex]["resolution_x"] = "";
+      obj[newIndex]["resolution_y"] = "";
+      obj[newIndex]["render_formats"] = {};
+      for (var supportedFormat in this.supportedFormats) {
+        obj[newIndex]["render_formats"][supportedFormat] = false;
+      }
+      obj[newIndex]["filename_format"] = "%SceneName%";
+      this.presets.data = obj;
+
+      this.refreshPresetsAndDisplays();
+      this.ui.main.presetBox.presetsTable.selectRow(newIndex - 1);
+      this.ui.main.presetBox.presetsTable.scrollToBottom();
+    } catch (error) {
+      MessageLog.trace(error);
+    } finally {
     }
-  );
+  });
+  // // ----------- Edit Preset Signal ----------- //
+  // this.ui.main.presetBox.buttonEditPreset.clicked.connect(this, function () {
+  //   this.editMode = "edit";
+  //   this.selectedPreset = this.ui.main.presetBox.presetListWidget
+  //     .currentItem()
+  //     .text();
+  //   this.presetEditUI.call(this); // Add functionality to edit preset button
+  // });
+  // this.ui.main.presetBox.presetListWidget.itemDoubleClicked.connect(
+  //   this,
+  //   function () {
+  //     this.editMode = "edit";
+  //     this.selectedPreset = this.ui.main.presetBox.presetListWidget
+  //       .currentItem()
+  //       .text();
+  //     this.presetEditUI.call(this); // Add functionality to edit preset button
+  //   }
+  // );
   // ----------- Duplicate Preset Signal ----------- //
   this.ui.main.presetBox.buttonDuplPreset.clicked.connect(this, function () {
-    this.editMode = "duplicate";
-    this.selectedPreset = this.ui.main.presetBox.presetListWidget
-      .currentItem()
-      .text();
-    this.presetEditUI.call(this); // Add functionality to edit preset button
+    try {
+      MessageLog.trace("Duplicating");
+
+      var selectedItems = this.ui.main.presetBox.presetsTable.selectedItems();
+      if (selectedItems.length > 0) {
+        var selectedItem = {
+          index: selectedItems[0].row(),
+          presetName: this.ui.main.presetBox.presetsTable
+            .item(selectedItems[0].row(), 1)
+            .text(),
+        };
+        var obj = this.presets.data;
+        var newIndex = Object.keys(obj).length + 1;
+        obj[newIndex] = {};
+        obj[newIndex]["render_enabled"] =
+          obj[selectedItem.index + 1]["render_enabled"];
+        obj[newIndex]["preset_name"] =
+          obj[selectedItem.index + 1]["preset_name"];
+        obj[newIndex]["aspect_ratio"] =
+          obj[selectedItem.index + 1]["aspect_ratio"];
+        obj[newIndex]["resolution_x"] =
+          obj[selectedItem.index + 1]["resolution_x"];
+        obj[newIndex]["resolution_y"] =
+          obj[selectedItem.index + 1]["resolution_y"];
+        obj[newIndex]["render_formats"] = {};
+        for (var supportedFormat in this.supportedFormats) {
+          obj[newIndex]["render_formats"][supportedFormat] =
+            obj[selectedItem.index + 1]["render_formats"][supportedFormat];
+        }
+        obj[newIndex]["filename_format"] =
+          obj[selectedItem.index + 1]["filename_format"];
+        this.presets.data = obj;
+
+        this.refreshPresetsAndDisplays();
+        this.ui.main.presetBox.presetsTable.selectRow(newIndex - 1);
+        this.ui.main.presetBox.presetsTable.scrollToBottom();
+      }
+    } catch (error) {
+      MessageLog.trace(error);
+    } finally {
+    }
+    // this.editMode = "duplicate";
+    // this.selectedPreset = this.ui.main.presetBox.presetListWidget
+    //   .currentItem()
+    //   .text();
+    // this.presetEditUI.call(this); // Add functionality to edit preset button
   });
   // ----------- Delete Preset Signal ----------- //
   this.ui.main.presetBox.buttonDeletePreset.clicked.connect(this, function () {
-    var selectedItem = this.ui.main.presetBox.presetListWidget
-      .currentItem()
-      .text();
-    var confirmationDialog = new QMessageBox();
-    confirmationDialog.text =
-      'Are you sure you want to remove "' + selectedItem + '"?';
-    confirmationDialog.addButton(QMessageBox.Yes);
-    confirmationDialog.addButton(QMessageBox.No);
-    var confirmationAnswer = confirmationDialog.exec();
-    if (confirmationAnswer == QMessageBox.Yes) {
-      this.presets.remove(selectedItem);
-      var messageDialog = new QMessageBox(
-        false,
-        "",
-        "Preset removed",
-        QMessageBox.Ok,
-        this.ui
-      );
-      this.refreshPresetsAndDisplays();
-      messageDialog.exec();
+    try {
+      var selectedItems = this.ui.main.presetBox.presetsTable.selectedItems();
+      if (selectedItems.length > 0) {
+        var selectedItem = {
+          index: selectedItems[0].row(),
+          presetName: this.ui.main.presetBox.presetsTable
+            .item(selectedItems[0].row(), 1)
+            .text(),
+        };
+
+        var confirmationDialog = new QMessageBox(this.ui);
+        confirmationDialog.text =
+          'Are you sure you want to remove "' + selectedItem.presetName + '"?';
+        var yesButton = confirmationDialog.addButton(QMessageBox.Yes);
+        var noButton = confirmationDialog.addButton(QMessageBox.No);
+
+        confirmationDialog.buttonClicked.connect(
+          this,
+          function (clickedButton) {
+            if (clickedButton === yesButton) {
+              this.presets.remove(selectedItem.index);
+              var messageDialog = new QMessageBox(
+                QMessageBox.NoIcon,
+                "",
+                "Preset removed",
+                QMessageBox.Ok,
+                this.ui
+              );
+              this.refreshPresetsAndDisplays();
+              messageDialog.exec();
+            }
+            // if you have actions for No button you can add it here
+            // else it will just close the dialog
+          }
+        );
+
+        confirmationDialog.exec();
+      }
+    } catch (error) {
+      MessageLog.trace(error);
+    } finally {
     }
   });
 
@@ -522,9 +640,9 @@ EzRender.prototype.setupAdvancedUI = function () {
           ? false
           : true;
       // this.ui.main.presetBox.presetInfoBox.setVisible(enablebuttons);
-      this.ui.main.presetBox.buttonDeletePreset.setEnabled(enablebuttons);
-      this.ui.main.presetBox.buttonEditPreset.setEnabled(enablebuttons);
-      this.ui.main.presetBox.buttonDuplPreset.setEnabled(enablebuttons);
+      // this.ui.main.presetBox.buttonDeletePreset.setEnabled(enablebuttons);
+      // this.ui.main.presetBox.buttonEditPreset.setEnabled(enablebuttons);
+      // this.ui.main.presetBox.buttonDuplPreset.setEnabled(enablebuttons);
       this.ui.main.presetBox.presetInfoBox.presetNameInfoLabel.setVisible(
         enablebuttons
       );
@@ -683,15 +801,14 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.ui.setCurrentWidget(this.ui.main);
   });
 
-  //////////// Presets Table Init ///////////////////
-  this.ui.main.presetBox.presetListWidget.setVisible(false); //////////////////////////////// deletear luego
+  //////////// Presets Table Setup ///////////////////
+  this.ui.main.presetBox.presetListWidget.setVisible(false);
   this.ui.main.presetBox.presetsTable.itemChanged.connect(
     this,
     function (item) {
       try {
         this.ui.main.presetBox.presetsTable.blockSignals(true);
 
-        // MessageLog.trace(JSON.stringify(this.presets.data[item.row() + 1]));
         var obj = this.presets.data;
         var currentItem = {
           row: item.row(),
@@ -703,19 +820,7 @@ EzRender.prototype.setupAdvancedUI = function () {
           //   .text(),
         };
 
-        // obj[presetName] = {
-        //   render_enabled: true,
-        //   render_tag: renderTag,
-        //   resolution_x: resX,
-        //   resolution_y: resY,
-        //   render_formats: {
-        //     mov: mov,
-        //     mp4: mp4,
-        //     pngseq: pngseq,
-        //   },
-        // };
-
-        // Render Enabled Checkbox
+        // Store Render Enabled Checkbox
         if (currentItem.column === 0) {
           obj[currentItem.row + 1]["render_enabled"] =
             currentItem.checkState === Qt.Checked;
@@ -745,6 +850,7 @@ EzRender.prototype.setupAdvancedUI = function () {
           }
         }
 
+        // Store Resolution Width
         if (currentItem.column === 3) {
           if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
             var aspectRatio =
@@ -763,6 +869,7 @@ EzRender.prototype.setupAdvancedUI = function () {
           }
         }
 
+        // Store Resolution Height
         if (currentItem.column === 4) {
           if (obj[currentItem.row + 1]["aspect_ratio"] !== "Unlocked") {
             var aspectRatio =
@@ -781,6 +888,7 @@ EzRender.prototype.setupAdvancedUI = function () {
           }
         }
 
+        // Store Selected Formats
         if (currentItem.column === 5) {
           var editedFormats = currentItem.itemText.split(", ");
 
@@ -789,6 +897,8 @@ EzRender.prototype.setupAdvancedUI = function () {
               editedFormats.indexOf(supportedFormat) > -1;
           }
         }
+
+        // Store Filename Format
         if (currentItem.column === 6) {
           obj[currentItem.row + 1]["filename_format"] = currentItem.itemText;
         }
@@ -812,19 +922,6 @@ EzRender.prototype.setupAdvancedUI = function () {
       }
     }
   );
-
-  // // Force the last header section to stretch to the end
-  // this.ui.main.presetBox.presetsTable
-  //   .horizontalHeader()
-  //   .sectionResized.connect(this, function () {
-  //     try {
-  //       this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
-  //       // this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = false;
-  //       // this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = true;
-  //     } catch (error) {
-  //       MessageLog.trace(error);
-  //     }
-  //   });
 };
 
 EzRender.prototype.showAdvancedUI = function () {
@@ -896,7 +993,8 @@ EzRender.prototype.refreshUIDisplayNodes = function () {
 };
 
 EzRender.prototype.refreshPresetsAndDisplays = function () {
-  this.ui.main.presetBox.presetListWidget.clear(); // Clear advanced ui preset list
+  MessageLog.trace("Refreshing tables");
+  // this.ui.main.presetBox.presetListWidget.clear(); // Clear advanced ui preset list
   // this.toolbarui.presetList.clear(); // Clear Toolbar preset list
 
   this.ui.main.displayBox.displaySelector.clear(); // Clear advanced ui display list
@@ -914,33 +1012,20 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
   }
 
   var currentPresets = this.presets.data;
-  // for (var preset in currentPresets) {
-  //   // Add item to the advanced ui preset list
-  //   var item = new QListWidgetItem(
-  //     preset,
-  //     this.ui.main.presetBox.presetListWidget
-  //   );
-  //   item.setCheckState(currentPresets[preset].render_enabled == true ? 2 : 0); // una hora de investigacion, transforma el booleano en la respuesta de check state (que es checked, not checked, partially checked)
-  //   this.ui.main.presetBox.presetListWidget.addItem(item);
-
-  //   // Add item to the toolbar ui preset list
-  //   // this.toolbarui.presetList.addItem(preset);
-  // }
 
   /////// PRESETS TABLE STUFF ///////
-  this.ui.main.presetBox.presetsTable.blockSignals(true);
+  this.ui.main.presetBox.presetsTable.blockSignals(true); // Block signals to avoid recursivity
 
   this.ui.main.presetBox.presetsTable.clearContents(); // Clear advanced ui preset list
 
-  this.ui.main.presetBox.presetsTable.colCount = 4;
   this.ui.main.presetBox.presetsTable.rowCount =
-    Object.keys(currentPresets).length;
+    Object.keys(currentPresets).length; // QTableWidget requires rowCount to be set manually
 
   // Update QTableWidget filling it with the presets
   // for (var i = 0; i < Object.keys(currentPresets).length; i++) {
+  // var currentTableIndex = 0;
   for (var preset in currentPresets) {
     var currentTableIndex = preset - 1;
-    // var currentPreset = Object.keys(currentPresets)[i];
 
     // Set the Row Height for each element
     this.ui.main.presetBox.presetsTable.setRowHeight(
@@ -948,32 +1033,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       UiLoader.dpiScale(25)
     );
 
-    // Add a 'enabled' checkbox
-    // var checkbox = new QCheckBox();
-    // checkbox.setChecked(currentPresets[currentPreset].render_enabled);
-    // this.ui.main.presetBox.presetsTable.setCellWidget(i, 0, new QCheckBox());
-
-    // this.ui.main.presetBox.presetsTable
-    //   .cellWidget(i, 0)
-    //   .setChecked(currentPresets[currentPreset].render_enabled);
-
-    // MessageLog.trace(
-    //   this.ui.main.presetBox.presetsTable.cellWidget(i, 0).checked
-    // );
-
-    // this.ui.main.presetBox.presetsTable
-    //   .cellWidget(i, 0)
-    //   .stateChanged.connect(this, function (state) {
-
-    //     // MessageLog.trace(JSON.stringify(this.presets.data[currentPreset]));
-    //     // MessageLog.trace(this.ui.main.presetBox.presetsTable.item(i, 0));
-    //     // MessageLog.trace(this.presets.data[currentPreset].render_enabled);
-    //     // this.presets.data[currentPreset].render_enabled =
-    //     //   state === 2 ? true : false;
-    //     // MessageLog.trace(this.presets.data[currentPreset].render_enabled);
-    //   });
-
-    // Add Checkbox
+    //////// PRESET ENABLED
     this.ui.main.presetBox.presetsTable.setItem(
       currentTableIndex,
       0,
@@ -984,7 +1044,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       .item(currentTableIndex, 0)
       .setCheckState(currentPresets[preset].render_enabled == true ? 2 : 0);
 
-    // Add Preset Name
+    //////// PRESET NAME
     this.ui.main.presetBox.presetsTable.setItem(
       currentTableIndex,
       1,
@@ -1088,7 +1148,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       new QTableWidgetItem(currentPresets[preset]["resolution_y"])
     );
 
-    //////////////////// Formats
+    //////// FORMAT
     var formatList = [];
     for (var format in currentPresets[preset]["render_formats"])
       if (currentPresets[preset]["render_formats"][format])
@@ -1127,6 +1187,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
 
           tool_button.setMenu(menu);
           tool_button.popupMode = QToolButton.InstantPopup;
+
           // Use QTimer to delay showing the popup until after the combo box is shown
           var timer = new QTimer();
           timer.singleShot = true;
@@ -1167,6 +1228,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       new QTableWidgetItem(formatList.join(", "))
     );
 
+    //////// FILENAME FORMAT
     function tagDelegate(tagsList) {
       var delegate = new QStyledItemDelegate();
 
@@ -1174,18 +1236,6 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
         try {
           var editor = new QWidget(parent);
           var layout = new QHBoxLayout(editor);
-          // function CustomLineEdit(parent) {
-          //   QLineEdit.call(this, parent);
-          // }
-          // CustomLineEdit.prototype = new QLineEdit();
-          // CustomLineEdit.prototype.focusOutEvent = function (e) {
-          //   try {
-          //     delegate.setModelData(editor, parent.model(), index);
-          //   } catch (error) {
-          //     MessageLog.trace(error);
-          //   }
-          // };
-          // var lineEdit = new CustomLineEdit(parent);
           var lineEdit = new QLineEdit(parent);
           var comboBox = new QComboBox(parent);
 
@@ -1194,43 +1244,6 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
             var tag = comboBox.itemText(index);
             lineEdit.text += tag;
           });
-
-          // lineEdit.focusOutEvent = function (e) {
-          //   try {
-          //     MessageLog.trace("Hola");
-          //     delegate.setModelData(editor, parent.parent().model(), index);
-          //     editor.hide();
-          //   } catch (error) {
-          //     MessageLog.trace(error);
-          //   }
-          // };
-
-          // Commit the editing when lineEdit loses focus
-          // lineEdit.editingFinished.connect(function () {
-          //   try {
-          //     delegate.commitData.emit(editor);
-          //     delegate.closeEditor.emit(editor);
-          //   } catch (error) {
-          //     MessageLog.trace(error);
-          //   }
-          // });
-          // lineEdit.editingFinished.connect(function () {
-          //   var returnPressEvent = new QKeyEvent(
-          //     QEvent.KeyPress,
-          //     Qt.Key_Return,
-          //     Qt.NoModifier
-          //   );
-          //   QCoreApplication.postEvent(lineEdit, returnPressEvent);
-          // });
-
-          // // Use QTimer to set focus with a delay
-          // var timer = new QTimer();
-          // timer.singleShot = true;
-          // timer.timeout.connect(function () {
-          //   lineEdit.setFocus();
-          //   timer.deleteLater();
-          // });
-          // timer.start(0);
 
           layout.addWidget(lineEdit, 1, 1); // Layout will give more space to the editor
           layout.addWidget(comboBox, 0, 1); // Assign a lower stretch factor to comboBox
@@ -1268,10 +1281,18 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       6,
       new QTableWidgetItem(currentPresets[preset]["filename_format"])
     );
+    // currentTableIndex++;
   }
 
-  this.ui.main.presetBox.presetsTable.resizeColumnsToContents();
-  this.ui.main.presetBox.presetsTable.horizontalHeader().stretchLastSection = true;
+  // Hacky method to force last header section to stretch to the end. setStretchLastSection doesnt work on tbh
+  for (
+    var i = 0;
+    i < this.ui.main.presetBox.presetsTable.columnCount - 1;
+    i++
+  ) {
+    this.ui.main.presetBox.presetsTable.resizeColumnToContents(i);
+  }
+
   this.ui.main.presetBox.presetsTable.blockSignals(false);
   /////// END PRESETS TABLE STUFF ///////
 
