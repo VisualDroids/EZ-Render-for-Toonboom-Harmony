@@ -51,6 +51,10 @@ function EzRender(packageInfo) {
       "/lib/AudioPlayer/audioplayer.js").AudioPlayer)(
       this.packageInfo.packageFolder + "/sound/win.wav"
     ),
+    fail: new (require(this.packageInfo.packageFolder +
+      "/lib/AudioPlayer/audioplayer.js").AudioPlayer)(
+      this.packageInfo.packageFolder + "/sound/fail.wav"
+    ),
   };
 
   // Init sequence
@@ -63,7 +67,10 @@ function EzRender(packageInfo) {
     mov: { title: ".mov (h264)" },
     pngseq: { title: ".png (PNG Sequence)" },
   };
-  // ["mov", "pngseq", "mkv"];
+
+  // State
+  this.interruptRender = false;
+  this.renderSuccess = false;
 }
 
 // EzRender.prototype = new QObject();
@@ -617,18 +624,32 @@ EzRender.prototype.setupAdvancedUI = function () {
   });
 
   this.ui.main.buttonRender.clicked.connect(this, function () {
+    this.interruptRender = false;
+    this.renderSuccess = false;
     this.renderMode = "Advanced";
     this.ui.setCurrentWidget(this.ui.progress);
     // this.ui.setCurrentWidget(this)
     this.ui.progress.openRendersFolder.setVisible(false);
     this.ui.progress.goBack.setVisible(false);
     this.ui.progress.progressBar.setVisible(true);
+    this.ui.progress.cancelRenderButton.setVisible(true);
+    this.ui.progress.cancelRenderButton.text = "Cancel";
     this.renderEngine.call(this);
-    this.ui.progress.openRendersFolder.setVisible(true);
-    this.ui.progress.goBack.setVisible(true);
     this.ui.progress.progressBar.setVisible(false);
-    this.beep.win.play();
-    this.ui.progress.progressText.text = "Render complete 😊";
+    if (this.renderSuccess) {
+      this.ui.progress.openRendersFolder.setVisible(true);
+      this.ui.progress.cancelRenderButton.setVisible(false);
+      this.beep.win.play();
+      this.ui.progress.progressText.text = "✅ Render complete ✅";
+      this.ui.progress.goBack.setVisible(true);
+    } else {
+      this.ui.progress.openRendersFolder.setVisible(true);
+      this.ui.progress.cancelRenderButton.setVisible(false);
+      this.beep.fail.play();
+      this.ui.progress.progressText.text =
+        "⚠️ Render ended before completion ⚠️";
+      this.ui.progress.goBack.setVisible(true);
+    }
   });
 
   // // Disable some buttons if no presets are selected
@@ -779,11 +800,14 @@ EzRender.prototype.setupAdvancedUI = function () {
   });
 
   //////////////////// PROGRESS UI /////////////////////////
-  this.ui.progress.cancelRenderButton.setVisible(false);
+  // this.ui.progress.cancelRenderButton.setVisible(false);
   this.ui.progress.cancelRenderButton.clicked.connect(this, function () {
     try {
-      render.cancelRender();
-      this.renderFinished();
+      this.interruptRender = true;
+      this.ui.progress.cancelRenderButton.text =
+        "Waiting for this render to finish...";
+      // render.cancelRender();
+      // this.renderFinished();
       // render.frameReady.disconnect(this, this.frameReady);
       // this.log("Deleting >> " + outputPath);
       // new QDir(outputPath).removeRecursively();
@@ -1454,7 +1478,24 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
 
     this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
       6,
-      tagDelegate(["%date%", "%time%", "%scenename%", "%sceneversion%"])
+      tagDelegate([
+        "%SceneName%",
+        "%SceneVersion%",
+        "%SceneVersionName%",
+        "%PresetName%",
+        "%Resolution%",
+        "%RenderFormat%",
+        "%DisplayNode%",
+        "%DateTime%",
+        "%Date%",
+        "%Time%",
+        "%Year%",
+        "%Month%",
+        "%Day%",
+        "%Hour%",
+        "%Minute%",
+        "%Second%",
+      ])
     );
 
     this.ui.main.presetBox.presetsTable.setItem(
@@ -1599,47 +1640,128 @@ EzRender.prototype.renderEngine = function () {
 
     for (var preset in enabledPresets) {
       for (var renderDisplay in enabledDisplays) {
+        // If interrupt button gets clicked, stop all renders at next render start
+        if (this.interruptRender) {
+          // this.errorMessage("Render Interrupted");
+          throw new Error("Render Interrupted");
+        }
         var currentDisplay = enabledDisplays[renderDisplay];
         var currentPreset = enabledPresets[preset];
 
-        var renderOutputFolder = this.outputFolder;
-        MessageLog.trace(renderOutputFolder);
+        if (
+          !currentPreset["resolution_x"] ||
+          !currentPreset["resolution_y"] ||
+          (!currentPreset["render_formats"]["mov"] &&
+            !currentPreset["render_formats"]["pngseq"])
+        ) {
+          this.errorMessage(
+            'Preset "' +
+              currentPreset["preset_name"] +
+              '" has missing fields.\nPlease configure those and try again.'
+          );
+          break;
+        }
+
+        if (
+          !currentPreset["filename_format"] ||
+          currentPreset["filename_format"] === ""
+        ) {
+          currentPreset["filename_format"] = "%SceneName%";
+        }
 
         var renderFullOutputPath =
-          renderOutputFolder +
-          "/" +
-          scene.currentScene() +
-          "-" +
-          currentPreset.render_tag +
-          "-" +
-          currentDisplay.name;
+          this.outputFolder + "/" + currentPreset["filename_format"];
 
-        MessageLog.trace(renderFullOutputPath);
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%SceneName%/g,
+          scene.currentScene()
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%SceneVersion%/g,
+          "v" + scene.currentVersion()
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%SceneVersionName%/g,
+          scene.currentVersionName()
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%PresetName%/g,
+          currentPreset.preset_name
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Resolution%/g,
+          "[" +
+            currentPreset.resolution_x +
+            "x" +
+            currentPreset.resolution_y +
+            "]"
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%DisplayNode%/g,
+          currentDisplay.name
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%DateTime%/g,
+          this.now().dateTime
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Date%/g,
+          this.now().date
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Time%/g,
+          this.now().time
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Year%/g,
+          this.now().year
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Month%/g,
+          this.now().month
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Day%/g,
+          this.now().day
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Hour%/g,
+          this.now().hour
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Minute%/g,
+          this.now().minute
+        );
+        renderFullOutputPath = renderFullOutputPath.replace(
+          /%Second%/g,
+          this.now().second
+        );
 
         if (this.renderMode == "Advanced") {
           this.log(
             "Rendering " +
-              currentPreset +
+              currentPreset.preset_name +
               " using " +
-              currentDisplay +
+              currentDisplay.name +
               " display..."
           );
           progressWidget.progressText.text =
             "Rendering " +
-            currentPreset +
+            currentPreset.preset_name +
             " using " +
-            currentDisplay +
+            currentDisplay.name +
             " display...";
         }
 
-        MessageLog.trace(JSON.stringify(currentPreset));
-
         if (currentPreset.render_formats.mov) {
-          MessageLog.trace("renderiseichon mov");
+          var finalFileName = renderFullOutputPath.replace(
+            /%RenderFormat%/g,
+            "Quicktime"
+          );
+
           this.movRenderer.call(
             this,
-            // renderFullOutputPath + "-" + this.getCurrentDateTime() + ".mov",
-            this.versionedPath(renderFullOutputPath + ".mov"),
+            this.versionedPath(finalFileName + ".mov"),
             currentPreset.resolution_x,
             currentPreset.resolution_y,
             currentDisplay.name,
@@ -1647,12 +1769,13 @@ EzRender.prototype.renderEngine = function () {
           );
         }
         if (currentPreset.render_formats.pngseq) {
-          MessageLog.trace("renderiseichon pngseq");
-
+          finalFileName = renderFullOutputPath.replace(
+            /%RenderFormat%/g,
+            "PNGSequence"
+          );
           this.pngRenderer.call(
             this,
-            // renderFullOutputPath + "-" + this.getCurrentDateTime(),
-            this.versionedPath(renderFullOutputPath),
+            this.versionedPath(finalFileName),
             currentPreset.resolution_x,
             currentPreset.resolution_y,
             currentDisplay.path,
@@ -1666,7 +1789,10 @@ EzRender.prototype.renderEngine = function () {
     if (this.renderMode == "Simple") {
       this.openFolder.call(this, this.outputFolder);
     }
+    // Set Successful Render State
+    this.renderSuccess = true;
   } catch (error) {
+    this.renderSuccess = false;
     MessageLog.trace(error);
   }
 };
@@ -1929,21 +2055,52 @@ EzRender.prototype.versionedPath = function (originalPath) {
   return newPath;
 };
 
-EzRender.prototype.getCurrentDateTime = function () {
-  var now = new Date();
-  return (
-    now.getFullYear() +
-    "" +
-    ("0" + (now.getMonth() + 1)).slice(-2) +
-    "" +
-    ("0" + now.getDate()).slice(-2) +
-    "-" +
-    ("0" + now.getHours()).slice(-2) +
-    "" +
-    ("0" + now.getMinutes()).slice(-2) +
-    "" +
-    ("0" + now.getSeconds()).slice(-2)
+EzRender.prototype.errorMessage = function (error) {
+  var messageDialog = new QMessageBox(
+    QMessageBox.NoIcon,
+    "",
+    error,
+    QMessageBox.Ok,
+    this.ui
   );
+  this.refreshPresetsAndDisplays();
+  messageDialog.exec();
+};
+
+EzRender.prototype.now = function () {
+  var now = new Date();
+  return {
+    date:
+      now.getFullYear() +
+      "" +
+      ("0" + (now.getMonth() + 1)).slice(-2) +
+      "" +
+      ("0" + now.getDate()).slice(-2),
+    time:
+      ("0" + now.getHours()).slice(-2) +
+      "" +
+      ("0" + now.getMinutes()).slice(-2) +
+      "" +
+      ("0" + now.getSeconds()).slice(-2),
+    dateTime:
+      now.getFullYear() +
+      "" +
+      ("0" + (now.getMonth() + 1)).slice(-2) +
+      "" +
+      ("0" + now.getDate()).slice(-2) +
+      "-" +
+      ("0" + now.getHours()).slice(-2) +
+      "" +
+      ("0" + now.getMinutes()).slice(-2) +
+      "" +
+      ("0" + now.getSeconds()).slice(-2),
+    year: now.getFullYear(),
+    month: "0" + (now.getMonth() + 1),
+    day: ("0" + now.getDate()).slice(-2),
+    hour: ("0" + now.getHours()).slice(-2),
+    minute: ("0" + now.getMinutes()).slice(-2),
+    second: ("0" + now.getSeconds()).slice(-2),
+  };
 };
 
 // Logging and debuging functions
