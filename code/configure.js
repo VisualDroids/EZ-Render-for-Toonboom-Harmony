@@ -4,8 +4,8 @@
  * @author miwgel < biste.cc >
  */
 
-function fetchData(absFilePath) {
-  var readFile = new QFile(absFilePath);
+function fetchData(filePath) {
+  var readFile = new QFile(filePath);
   try {
     if (!readFile.open(QIODevice.ReadOnly)) {
       throw new Error("Unable to open file.");
@@ -82,15 +82,14 @@ function configure(packageFolder, packageName) {
     categoryText: packageInfo.packageShortName,
   });
 
-  // Keyboard Shortcuts
-  ScriptManager.addShortcut({
-    id: packageInfo.packageID + "keybind3",
-    text: "EZ Render: Render the scene",
-    action: "triggerEzRender in " + packageFolder + "/configure.js",
-    longDesc: "Renders the scene right away",
-    categoryId: "Visual Droids",
-    categoryText: packageInfo.packageShortName,
-  });
+  // ScriptManager.addShortcut({
+  //   id: packageInfo.packageID + "keybind3",
+  //   text: "EZ Render: Render the scene",
+  //   action: "triggerEzRender in " + packageFolder + "/configure.js",
+  //   longDesc: "Renders the scene right away",
+  //   categoryId: "Visual Droids",
+  //   categoryText: packageInfo.packageShortName,
+  // });
 
   var toolbar = new ScriptToolbarDef({
     id: packageInfo.packageID,
@@ -152,36 +151,41 @@ function configure(packageFolder, packageName) {
 // }
 
 // Load EZ Render into memory
-function init() {
-  // var packageInfo = require("./configure.js").packageInfo;
-  var EzRender = require("./ezrender.js").EzRender;
-  this.__proto__.ezrender = new EzRender(packageInfo);
-}
+// function init() {
+//   // var packageInfo = require("./configure.js").packageInfo;
+//   var EzRender = require("./ezrender.js").EzRender;
+//   this.__proto__.ezrender = new EzRender(packageInfo);
+// }
 
 // Display EZ Render Main Window
 function showEZRenderMainScreen() {
-  try {
-    this.__proto__.ezrender.showAdvancedUI();
-  } catch (error) {
-    MessageBox.information(
-      "This tool didn't load properly\n\n" +
-        "Please contact the developers though Gumroad or Discord\n\n" +
-        error
-    );
-  }
+  // // Method 1 PROTO:
+  // try {
+  //   this.__proto__.ezrender.showAdvancedUI();
+  // } catch (error) {
+  //   MessageBox.information(
+  //     "This tool didn't load properly\n\n" +
+  //       "Please contact the developers though Gumroad or Discord\n\n" +
+  //       error
+  //   );
+  // }
+  // Method 2 Classic
+  var EzRender = require("./ezrender.js").EzRender;
+  var ezrenderInstance = new EzRender(packageInfo);
+  ezrenderInstance.showAdvancedUI();
 }
 
-function triggerEzRender() {
-  try {
-    this.__proto__.ezrender.ui.main.buttonRender.clicked();
-  } catch (error) {
-    MessageBox.information(
-      "This tool didn't load properly\n\n" +
-        "Please contact the developers though Gumroad or Discord\n\n" +
-        error
-    );
-  }
-}
+// function triggerEzRender() {
+//   try {
+//     this.__proto__.ezrender.ui.main.buttonRender.clicked();
+//   } catch (error) {
+//     MessageBox.information(
+//       "This tool didn't load properly\n\n" +
+//         "Please contact the developers though Gumroad or Discord\n\n" +
+//         error
+//     );
+//   }
+// }
 
 function setStartFrame() {
   scene.setStartFrame(frame.current());

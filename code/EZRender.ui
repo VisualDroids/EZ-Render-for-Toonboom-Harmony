@@ -6,28 +6,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>526</width>
-    <height>715</height>
+    <width>772</width>
+    <height>709</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string/>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="currentIndex">
-   <number>2</number>
+   <number>0</number>
   </property>
   <widget class="QWidget" name="main">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QGroupBox" name="presetBox">
       <property name="title">
-       <string>1: Presets</string>
+       <string>Output Settings</string>
       </property>
-      <layout class="QGridLayout" name="gridLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_9">
        <property name="sizeConstraint">
         <enum>QLayout::SetMinimumSize</enum>
        </property>
-       <item row="1" column="0">
+       <item>
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="0" column="1">
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -119,6 +122,9 @@
            </item>
            <item>
             <widget class="QTableWidget" name="presetsTable">
+             <property name="dragDropOverwriteMode">
+              <bool>false</bool>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -128,11 +134,17 @@
              <property name="selectionBehavior">
               <enum>QAbstractItemView::SelectRows</enum>
              </property>
-             <property name="gridStyle">
-              <enum>Qt::DotLine</enum>
+             <property name="textElideMode">
+              <enum>Qt::ElideMiddle</enum>
+             </property>
+             <property name="cornerButtonEnabled">
+              <bool>false</bool>
              </property>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderVisible">
+              <bool>false</bool>
              </attribute>
              <column>
               <property name="text">
@@ -179,11 +191,11 @@
      </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_10">
+     <layout class="QHBoxLayout" name="displayAndMarkers">
       <item>
        <widget class="QGroupBox" name="displayBox">
         <property name="title">
-         <string>2: Display</string>
+         <string>Display Nodes</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -197,11 +209,17 @@
            <property name="selectionBehavior">
             <enum>QAbstractItemView::SelectRows</enum>
            </property>
-           <property name="gridStyle">
-            <enum>Qt::DotLine</enum>
+           <property name="textElideMode">
+            <enum>Qt::ElideMiddle</enum>
+           </property>
+           <property name="cornerButtonEnabled">
+            <bool>false</bool>
            </property>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>true</bool>
+           </attribute>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
            </attribute>
            <column>
             <property name="text">
@@ -228,44 +246,55 @@
         </layout>
        </widget>
       </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QGroupBox" name="frameBox">
+       <widget class="QGroupBox" name="timeline">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="title">
-         <string>3: Set Render Start / Stop Frame</string>
+         <string>Timeline</string>
         </property>
-        <property name="checkable">
-         <bool>true</bool>
+        <property name="checked">
+         <bool>false</bool>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_9">
+        <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
-          <widget class="QToolButton" name="setStartFrameButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Set Start Frame
-to Current Frame</string>
-           </property>
-          </widget>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="1" column="2">
+            <widget class="QSpinBox" name="endFrameSpinBox"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="startFrameSpinBox"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="setStartFrameButton">
+             <property name="toolTip">
+              <string>Click for setting current frame as Start</string>
+             </property>
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="setEndFrameButton">
+             <property name="toolTip">
+              <string>Click for setting current frame as End</string>
+             </property>
+             <property name="text">
+              <string>End</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
-          <widget class="QToolButton" name="setEndFrameButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
+          <widget class="QPushButton" name="resetStartEnd">
            <property name="text">
-            <string>Set Stop Frame
-to Current Frame</string>
+            <string>Reset</string>
            </property>
           </widget>
          </item>
@@ -280,7 +309,7 @@ to Current Frame</string>
        <enum>Qt::LeftToRight</enum>
       </property>
       <property name="title">
-       <string>4: Set Output Folder</string>
+       <string>Output Location</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -288,34 +317,29 @@ to Current Frame</string>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="1">
-          <widget class="QPushButton" name="browseForFileButton">
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Click here to choose your own output destination</string>
-           </property>
-           <property name="text">
-            <string>Browse</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="outputPath">
-           <property name="frameShape">
-            <enum>QFrame::Panel</enum>
-           </property>
-           <property name="text">
-            <string>/user/directory/scenefolder/renders</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="outputPath"/>
+         </item>
+         <item row="0" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Reset</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="browseForFileButton">
+             <property name="toolTip">
+              <string>Click here to choose your own output destination</string>
+             </property>
+             <property name="text">
+              <string>Browse</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -323,7 +347,7 @@ to Current Frame</string>
      </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="renderLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QPushButton" name="buttonRender">
         <property name="sizePolicy">
@@ -331,12 +355,6 @@ to Current Frame</string>
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>40</height>
-         </size>
         </property>
         <property name="inputMethodHints">
          <set>Qt::ImhNoPredictiveText</set>
@@ -347,11 +365,21 @@ to Current Frame</string>
         <property name="autoDefault">
          <bool>true</bool>
         </property>
-        <property name="default">
+        <property name="flat">
          <bool>true</bool>
         </property>
-        <property name="flat">
-         <bool>false</bool>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Close</string>
         </property>
        </widget>
       </item>
@@ -752,46 +780,58 @@ of the render.</string>
      </spacer>
     </item>
     <item>
-     <widget class="QLabel" name="progressText">
-      <property name="text">
-       <string/>
+     <widget class="QGroupBox" name="renderProgress">
+      <property name="title">
+       <string>EZ Render</string>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <widget class="QLabel" name="progressText">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>24</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="openRendersFolder">
+           <property name="text">
+            <string>Open Renders Folder</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="cancelRenderButton">
+           <property name="text">
+            <string>Cancel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="goBack">
+           <property name="text">
+            <string>Go Back</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </widget>
-    </item>
-    <item>
-     <widget class="QProgressBar" name="progressBar">
-      <property name="value">
-       <number>24</number>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
-       <widget class="QPushButton" name="openRendersFolder">
-        <property name="text">
-         <string>Open Renders Folder</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="cancelRenderButton">
-        <property name="text">
-         <string>Cancel</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="goBack">
-        <property name="text">
-         <string>Go Back</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
     </item>
     <item>
      <spacer name="verticalSpacer_4">
@@ -810,7 +850,6 @@ of the render.</string>
   </widget>
  </widget>
  <tabstops>
-  <tabstop>browseForFileButton</tabstop>
   <tabstop>buttonRender</tabstop>
   <tabstop>presetName</tabstop>
   <tabstop>renderTag</tabstop>
@@ -828,5 +867,22 @@ of the render.</string>
   <tabstop>buttonDeletePreset</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>StackedWidget</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>596</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>304</x>
+     <y>312</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
