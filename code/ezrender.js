@@ -1112,13 +1112,14 @@ EzRender.prototype.setupAdvancedUI = function () {
           // );
 
           this.frameReady = function (frame, celImage) {
-            var outFrame =
+            var outFrame = this.versionedPath(
               this.outputFolder +
-              "/" +
-              scene.currentScene() +
-              "-" +
-              ("000000" + frame).slice(-6) +
-              ".png";
+                "/" +
+                scene.currentScene() +
+                "-" +
+                ("000000" + frame).slice(-6) +
+                ".png"
+            );
             celImage.imageFileAs(outFrame, "", "PNG4");
             // renderedFrames.push(outFrame);
             QCoreApplication.processEvents();
