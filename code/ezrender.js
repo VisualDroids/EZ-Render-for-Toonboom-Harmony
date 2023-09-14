@@ -1,6 +1,6 @@
 /**
  * @file EZ Render for Toonboom Harmony
- * @version 23.6
+ * @version 23.9
  * @copyright Visual Droids < www.visualdroids.com >
  * @author miwgel < biste.cc >
  * @license
@@ -71,6 +71,7 @@ function EzRender(packageInfo) {
   // State
   this.interruptRender = false;
   this.renderSuccess = false;
+  this.presetToEdit = null;
 }
 
 // EzRender.prototype = new QObject();
@@ -110,6 +111,9 @@ Object.defineProperty(presetsObject.prototype, "data", {
     }
   },
 });
+
+// Verify the validity of the presets file
+presetsObject.prototype.verify = function () {};
 
 presetsObject.prototype.toString = function () {
   return JSON.stringify(this.data);
@@ -258,7 +262,9 @@ presetsObject.prototype.initPresetsFile = function () {
         mp4: false,
         pngseq: true,
       },
-      filename_format: "",
+      compress: false,
+      output_name_format: "",
+      output_fileseq_format: "",
     },
     2: {
       preset_name: "Full HD mov",
@@ -268,11 +274,13 @@ presetsObject.prototype.initPresetsFile = function () {
       resolution_x: "1920",
       resolution_y: "1080",
       render_formats: {
-        mov: true,
+        mov: false,
         mp4: false,
-        pngseq: false,
+        pngseq: true,
       },
-      filename_format: "",
+      compress: false,
+      output_name_format: "",
+      output_fileseq_format: "",
     },
     3: {
       preset_name: "Low res Test",
@@ -286,7 +294,9 @@ presetsObject.prototype.initPresetsFile = function () {
         mp4: false,
         pngseq: true,
       },
-      filename_format: "",
+      compress: false,
+      output_name_format: "",
+      output_fileseq_format: "",
     },
   };
   try {
@@ -419,7 +429,6 @@ EzRender.prototype.setupAdvancedUI = function () {
   // ----------- Add Preset Signal ----------- //
   this.ui.main.presetBox.buttonAddPreset.clicked.connect(this, function () {
     try {
-      MessageLog.trace("hola");
       var obj = this.presets.data;
       var newIndex = Object.keys(obj).length + 1;
       obj[newIndex] = {};
@@ -432,7 +441,7 @@ EzRender.prototype.setupAdvancedUI = function () {
       for (var supportedFormat in this.supportedFormats) {
         obj[newIndex]["render_formats"][supportedFormat] = false;
       }
-      obj[newIndex]["filename_format"] = "%SceneName%";
+      obj[newIndex]["filename_format"] = "#SceneName#";
       this.presets.data = obj;
 
       this.refreshPresetsAndDisplays();
@@ -1075,6 +1084,132 @@ EzRender.prototype.setupAdvancedUI = function () {
     }
   );
 
+  //////////// Filename Editor Setup ///////////////////
+  var filenameOptions = {
+    1: { label: "Scene Name", value: "#SceneName#" },
+    2: { label: "Scene Version", value: "#SceneVersion#" },
+    3: { label: "Scene Version Name", value: "#SceneVersionName#" },
+    4: { label: "Preset Name", value: "#PresetName#" },
+    5: { label: "Resolution", value: "#Resolution#" },
+    6: { label: "Render Format", value: "#RenderFormat#" },
+    7: { label: "Display Node", value: "#DisplayNode#" },
+    8: { label: "Date-Time", value: "#DateTime#" },
+    9: { label: "Date", value: "#Date#" },
+    10: { label: "Time", value: "#Time#" },
+    11: { label: "Year", value: "#Year#" },
+    12: { label: "Month", value: "#Month#" },
+    13: { label: "Day", value: "#Day#" },
+    14: { label: "Hour", value: "#Hour#" },
+    15: { label: "Minute", value: "#Minute#" },
+    16: { label: "Second", value: "#Second#" },
+  };
+
+  for (var key in filenameOptions) {
+    var option = filenameOptions[key];
+    var row = Math.floor((key - 1) / 4);
+    var col = (key - 1) % 4;
+
+    var button = new QPushButton(option.label);
+    var tabsWidget = this.ui.filenameEditor.presetOutputNameEditor;
+
+    button.clicked.connect(
+      (function (value) {
+        try {
+          return function () {
+            try {
+              var currentTab = tabsWidget.currentWidget();
+
+              var field =
+                currentTab["outputNameField"] ||
+                currentTab["outputSeqNameField"];
+              if (field) {
+                field.insert(value);
+              }
+            } catch (error) {
+              MessageLog.trace(error);
+            }
+          };
+        } catch (error) {
+          MessageLog.trace(error);
+        }
+      })(option.value, tabsWidget)
+    );
+
+    this.ui.filenameEditor.filenameTags.layout().addWidget(button, row, col);
+  }
+  var outputNameProcessor = function (newText, presetToEdit) {
+    var outputName = newText;
+
+    outputName = outputName.replace(/#SceneName#/g, scene.currentScene());
+    outputName = outputName.replace(
+      /#SceneVersion#/g,
+      "v" + scene.currentVersion()
+    );
+    outputName = outputName.replace(
+      /#SceneVersionName#/g,
+      scene.currentVersionName()
+    );
+    outputName = outputName.replace(/#PresetName#/g, presetToEdit.preset_name);
+    outputName = outputName.replace(
+      /#Resolution#/g,
+      "[" + presetToEdit.resolution_x + "x" + presetToEdit.resolution_y + "]"
+    );
+    outputName = outputName.replace(/#RenderFormat#/g, "Video-Format");
+    var displayPath = scene.getDefaultDisplay().split("/").pop();
+    outputName = outputName.replace(/#DisplayNode#/g, displayPath);
+    outputName = outputName.replace(/#DateTime#/g, this.now().dateTime);
+    outputName = outputName.replace(/#Date#/g, this.now().date);
+    outputName = outputName.replace(/#Time#/g, this.now().time);
+    outputName = outputName.replace(/#Year#/g, this.now().year);
+    outputName = outputName.replace(/#Month#/g, this.now().month);
+    outputName = outputName.replace(/#Day#/g, this.now().day);
+    outputName = outputName.replace(/#Hour#/g, this.now().hour);
+    outputName = outputName.replace(/#Minute#/g, this.now().minute);
+    outputName = outputName.replace(/#Second#/g, this.now().second);
+
+    return outputName;
+  };
+
+  this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.videofile.outputNameField.textChanged.connect(
+    this,
+    function (newText) {
+      this.ui.filenameEditor.outputName.outputNameExample.setText(
+        outputNameProcessor.call(this, newText, this.presetToEdit) + ".mov"
+      );
+    }
+  );
+
+  this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.textChanged.connect(
+    this,
+    function (newText) {
+      this.ui.filenameEditor.outputName.outputSeqNameExample.setText(
+        outputNameProcessor.call(this, newText, this.presetToEdit) + "_####.png"
+      );
+    }
+  );
+
+  this.ui.filenameEditor.filenameGoBack.clicked.connect(this, function () {
+    this.ui.setCurrentWidget(this.ui.main);
+  });
+
+  this.ui.filenameEditor.filenameSave.clicked.connect(this, function () {
+    try {
+      var obj = this.presets.data;
+      for (var key in this.presetToEdit) {
+        obj[key].output_name_format =
+          this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.videofile.outputNameField.text;
+        obj[key].output_fileseq_format =
+          this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.text;
+      }
+      this.presets.data = obj;
+
+      this.refreshPresetsAndDisplays();
+      this.ui.setCurrentWidget(this.ui.main);
+    } catch (error) {
+      MessageLog.trace(error);
+    }
+  });
+
   this.ui.main.quickOptions.openRenderFolder.clicked.connect(this, function () {
     this.openFolder.call(this, this.outputFolder);
   });
@@ -1174,6 +1309,11 @@ EzRender.prototype.showAdvancedUI = function () {
     this.ui.setCurrentWidget(this.ui.main);
     this.refreshPresetsAndDisplays.call(this);
     this.ui.show();
+    this.ui.minimumWidth = UiLoader.dpiScale(800);
+    this.ui.minimumHeight = UiLoader.dpiScale(700);
+    this.ui.maximumWidth = UiLoader.dpiScale(800);
+    this.ui.maximumHeight = UiLoader.dpiScale(700);
+    this.ui.adjustSize();
     this.ui.activateWindow(); // Set current window to the top
     // this.ui.update();
   } catch (error) {
@@ -1534,76 +1674,127 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
     );
 
     //////// FILENAME FORMAT
-    function tagDelegate(tagsList) {
-      var delegate = new QStyledItemDelegate();
+    try {
+      var filenameEditButton = new QPushButton(
+        currentPresets[preset]["output_name_format"] +
+          " " +
+          currentPresets[preset]["output_fileseq_format"]
+      );
+      // filenameEditButton.clicked.connect(this, function () {
+      //   try {
+      //     this.ui.setCurrentWidget(this.ui.filenameEditor);
+      //     this.presetToEdit = currentPresets[preset];
+      //     MessageLog.trace(JSON.stringify(this.presetToEdit));
+      //     // this.ui.filenameEditor.presetData.filenameField.setText("");
+      //   } catch (error) {
+      //     MessageLog.trace(error);
+      //   }
+      // });
+      // MessageLog.trace(JSON.stringify(currentPresets[preset]));
+      filenameEditButton.clicked.connect(
+        this,
+        (function (presetName, presetContent) {
+          return function () {
+            try {
+              this.presetToEdit = {};
+              this.presetToEdit[presetName] = presetContent; // The preset to edit is the one that was clicked
+              // MessageLog.trace("VALUE> " + JSON.stringify(this.presetToEdit));
+              // this.ui.filenameEditor.presetOutputNameEditor.title =
+              //   'Output Name Format for "' + value.preset_name + '"';
+              this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.videofile.outputNameField.setText(
+                presetContent.output_name_format
+              );
+              this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.setText(
+                presetContent.output_fileseq_format
+              );
+              this.ui.filenameEditor.presetOutputNameEditor.currentIndex = 0;
+              this.ui.setCurrentWidget(this.ui.filenameEditor);
+            } catch (error) {
+              MessageLog.trace(error);
+            }
+          };
+        })(preset, currentPresets[preset])
+      );
 
-      delegate.createEditor = function (parent, option, index) {
-        try {
-          var editor = new QWidget(parent);
-          var layout = new QHBoxLayout(editor);
-          var lineEdit = new QLineEdit(parent);
-          var comboBox = new QComboBox(parent);
-
-          comboBox.addItems(tagsList);
-          comboBox.activated.connect(function (index) {
-            var tag = comboBox.itemText(index);
-            lineEdit.text += tag;
-          });
-
-          layout.addWidget(lineEdit, 1, 1); // Layout will give more space to the editor
-          layout.addWidget(comboBox, 0, 1); // Assign a lower stretch factor to comboBox
-
-          editor.minimumWidth = 200;
-          layout.setContentsMargins(0, 0, 0, 0);
-          layout.setSpacing(0);
-
-          editor.setLayout(layout);
-
-          return editor;
-        } catch (error) {
-          MessageLog.trace(error);
-        }
-      };
-      delegate.setEditorData = function (editorWidget, index) {
-        var value = index.model().data(index, Qt.EditRole);
-        var editor = editorWidget.layout().itemAt(0).widget();
-        editor.text = value;
-      };
-      delegate.setModelData = function (editorWidget, model, index) {
-        var editor = editorWidget.layout().itemAt(0).widget();
-        model.setData(index, editor.text, Qt.EditRole);
-      };
-      return delegate;
+      this.ui.main.presetBox.presetsTable.setCellWidget(
+        currentTableIndex,
+        6,
+        filenameEditButton
+      );
+    } catch (error) {
+      MessageLog.trace(error);
     }
+    //   //////// FILENAME FORMAT OLD
+    //   function tagDelegate(tagsList) {
+    //     var delegate = new QStyledItemDelegate();
 
-    this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
-      6,
-      tagDelegate([
-        "%SceneName%",
-        "%SceneVersion%",
-        "%SceneVersionName%",
-        "%PresetName%",
-        "%Resolution%",
-        "%RenderFormat%",
-        "%DisplayNode%",
-        "%DateTime%",
-        "%Date%",
-        "%Time%",
-        "%Year%",
-        "%Month%",
-        "%Day%",
-        "%Hour%",
-        "%Minute%",
-        "%Second%",
-      ])
-    );
+    //     delegate.createEditor = function (parent, option, index) {
+    //       try {
+    //         var editor = new QWidget(parent);
+    //         var layout = new QHBoxLayout(editor);
+    //         var lineEdit = new QLineEdit(parent);
+    //         var comboBox = new QComboBox(parent);
 
-    this.ui.main.presetBox.presetsTable.setItem(
-      currentTableIndex,
-      6,
-      new QTableWidgetItem(currentPresets[preset]["filename_format"])
-    );
-    // currentTableIndex++;
+    //         comboBox.addItems(tagsList);
+    //         comboBox.activated.connect(function (index) {
+    //           var tag = comboBox.itemText(index);
+    //           lineEdit.text += tag;
+    //         });
+
+    //         layout.addWidget(lineEdit, 1, 1); // Layout will give more space to the editor
+    //         layout.addWidget(comboBox, 0, 1); // Assign a lower stretch factor to comboBox
+
+    //         editor.minimumWidth = 200;
+    //         layout.setContentsMargins(0, 0, 0, 0);
+    //         layout.setSpacing(0);
+
+    //         editor.setLayout(layout);
+
+    //         return editor;
+    //       } catch (error) {
+    //         MessageLog.trace(error);
+    //       }
+    //     };
+    //     delegate.setEditorData = function (editorWidget, index) {
+    //       var value = index.model().data(index, Qt.EditRole);
+    //       var editor = editorWidget.layout().itemAt(0).widget();
+    //       editor.text = value;
+    //     };
+    //     delegate.setModelData = function (editorWidget, model, index) {
+    //       var editor = editorWidget.layout().itemAt(0).widget();
+    //       model.setData(index, editor.text, Qt.EditRole);
+    //     };
+    //     return delegate;
+    //   }
+
+    //   this.ui.main.presetBox.presetsTable.setItemDelegateForColumn(
+    //     6,
+    //     tagDelegate([
+    //       "#SceneName#",
+    //       "#SceneVersion#",
+    //       "#SceneVersionName#",
+    //       "#PresetName#",
+    //       "#Resolution#",
+    //       "#RenderFormat#",
+    //       "#DisplayNode#",
+    //       "#DateTime#",
+    //       "#Date#",
+    //       "#Time#",
+    //       "#Year#",
+    //       "#Month#",
+    //       "#Day#",
+    //       "#Hour#",
+    //       "#Minute#",
+    //       "#Second#",
+    //     ])
+    //   );
+
+    //   this.ui.main.presetBox.presetsTable.setItem(
+    //     currentTableIndex,
+    //     6,
+    //     new QTableWidgetItem(currentPresets[preset]["filename_format"])
+    //   );
+    //   // currentTableIndex++;
   }
 
   // Hacky method to force last header section to stretch to the end. setStretchLastSection doesnt work on tbh
@@ -1672,7 +1863,7 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
 
 //   // this.toolbarui.presetList.setStyleSheet(
 //   //     "border-radius: 5px;"
-//   //     //#comboBox{border: 1px solid #ced4da;border-radius: 4px;padding-left: 10px;}#comboBox::on{border: 4px solid #c2dbfe;}#comboBox::QListView {font-size: 12px; border: 1px solid rgba(0, 0, 0, 10%);padding: 5px; background-color: #fff;outline: 0px;}
+//   //     //#comboBox{border: 1px solid #ced4da;border-radius: 4px;padding-left: 10px;}#comboBox::on{border: 4px solid #c2dbfe;}#comboBox::QListView {font-size: 12px; border: 1px solid rgba(0, 0, 0, 10#);padding: 5px; background-color: #fff;outline: 0px;}
 //   // );
 //   this.toolbarui.setStartFrameButton.setStyleSheet(
 //     "color: white; border-radius: 5px;"
@@ -1777,35 +1968,41 @@ EzRender.prototype.renderEngine = function () {
           );
         }
 
-        // Give a simple filename template to the preset if the user forgets to set it
+        // Give a simple filename template to the preset if the user forgets to set it, or sets it blank
         if (
-          !currentPreset["filename_format"] ||
-          currentPreset["filename_format"] === ""
+          !currentPreset["output_name_format"] ||
+          currentPreset["output_name_format"] === ""
         ) {
-          currentPreset["filename_format"] = "%SceneName%-%DisplayNode%";
+          currentPreset["output_name_format"] = "#SceneName#-#DisplayNode#";
+        }
+        if (
+          !currentPreset["output_fileseq_format"] ||
+          currentPreset["output_fileseq_format"] === ""
+        ) {
+          currentPreset["output_fileseq_format"] = "#######";
         }
 
         var renderFullOutputPath =
-          this.outputFolder + "/" + currentPreset["filename_format"];
+          this.outputFolder + "/" + currentPreset["output_name_format"];
 
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%SceneName%/g,
+          /#SceneName#/g,
           scene.currentScene()
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%SceneVersion%/g,
+          /#SceneVersion#/g,
           "v" + scene.currentVersion()
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%SceneVersionName%/g,
+          /#SceneVersionName#/g,
           scene.currentVersionName()
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%PresetName%/g,
+          /#PresetName#/g,
           currentPreset.preset_name
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Resolution%/g,
+          /#Resolution#/g,
           "[" +
             currentPreset.resolution_x +
             "x" +
@@ -1813,43 +2010,43 @@ EzRender.prototype.renderEngine = function () {
             "]"
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%DisplayNode%/g,
+          /#DisplayNode#/g,
           currentDisplay.name
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%DateTime%/g,
+          /#DateTime#/g,
           this.now().dateTime
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Date%/g,
+          /#Date#/g,
           this.now().date
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Time%/g,
+          /#Time#/g,
           this.now().time
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Year%/g,
+          /#Year#/g,
           this.now().year
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Month%/g,
+          /#Month#/g,
           this.now().month
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Day%/g,
+          /#Day#/g,
           this.now().day
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Hour%/g,
+          /#Hour#/g,
           this.now().hour
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Minute%/g,
+          /#Minute#/g,
           this.now().minute
         );
         renderFullOutputPath = renderFullOutputPath.replace(
-          /%Second%/g,
+          /#Second#/g,
           this.now().second
         );
 
@@ -1880,7 +2077,7 @@ EzRender.prototype.renderEngine = function () {
 
         if (currentPreset.render_formats.mov) {
           var finalFileName = renderFullOutputPath.replace(
-            /%RenderFormat%/g,
+            /#RenderFormat#/g,
             "Quicktime"
           );
 
@@ -1898,7 +2095,7 @@ EzRender.prototype.renderEngine = function () {
         }
         if (currentPreset.render_formats.pngseq) {
           finalFileName = renderFullOutputPath.replace(
-            /%RenderFormat%/g,
+            /#RenderFormat#/g,
             "PNGSequence"
           );
 
@@ -1911,6 +2108,7 @@ EzRender.prototype.renderEngine = function () {
             currentPreset.resolution_x,
             currentPreset.resolution_y,
             currentDisplay.path,
+            currentPreset.output_fileseq_zero_padding,
             progressWidget
           );
         }
@@ -2041,6 +2239,7 @@ EzRender.prototype.pngRenderer = function (
   resolutionX,
   resolutionY,
   selectedDisplay,
+  zeroPadding,
   progressWidget
 ) {
   try {

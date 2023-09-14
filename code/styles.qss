@@ -75,6 +75,7 @@ QTableWidget {
   gridline-color: #1f1f32;
   background-color: #12111e;
   border: 1px solid #12111e;
+  alternate-background-color: #1d1c29;
 }
 
 QHeaderView {
