@@ -115,18 +115,18 @@ function configure(packageFolder, packageName) {
 
   ScriptManager.addToolbar(toolbar);
 
-  // try {
-  //   // Create an updater instance
-  //   var Updater = require(packageFolder + "/lib/Updater/updater.js").Updater;
-  //   new Updater(
-  //     (parentContext = this),
-  //     (packageInfo = packageInfo),
-  //     (onCompleteCallback = null),
-  //     (debug = packageInfo.debugMode)
-  //   );
-  // } catch (error) {
-  //   MessageLog.trace(error);
-  // }
+  try {
+    // Create an updater instance
+    var Updater = require(packageFolder + "/lib/Updater/updater.js").Updater;
+    new Updater(
+      (parentContext = this),
+      (packageInfo = packageInfo),
+      (onCompleteCallback = null),
+      (debug = packageInfo.debugMode)
+    );
+  } catch (error) {
+    MessageLog.trace(error);
+  }
   // try {
   //   // Create an EZ Render instance
   //   var createEZRender = require(packageInfo.packageFolder +
