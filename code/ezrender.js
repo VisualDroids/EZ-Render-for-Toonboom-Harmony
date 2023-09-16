@@ -130,6 +130,27 @@ function EzRender(packageInfo) {
 // Presets object prototype and functions
 function presetsObject(presetsFilePath) {
   this.presetsFile = new QFile(presetsFilePath);
+
+  this.model = {
+    preset_name: "",
+    render_enabled: false,
+    render_tag: "",
+    aspect_ratio: "",
+    resolution_x: "",
+    resolution_y: "",
+    render_formats: {
+      mov: false,
+      mp4: false,
+      pngseq: false,
+    },
+    compress: false,
+    output_name_format: "",
+    output_fileseq_format: "",
+    output_fileseq_zero_padding: 4,
+  };
+  if (!this.verify(this.data, this.model)) {
+    this.initPresetsFile();
+  }
 }
 
 Object.defineProperty(presetsObject.prototype, "data", {
@@ -141,7 +162,14 @@ Object.defineProperty(presetsObject.prototype, "data", {
       }
       return JSON.parse(this.presetsFile.readAll());
     } catch (error) {
-      MessageLog.trace(error);
+      if (error instanceof SyntaxError) {
+        this.presetsFile.close();
+        this.initPresetsFile();
+
+        return this.data;
+      } else {
+        MessageLog.trace(error);
+      }
     } finally {
       this.presetsFile.close();
     }
@@ -164,7 +192,19 @@ Object.defineProperty(presetsObject.prototype, "data", {
 });
 
 // Verify the validity of the presets file
-presetsObject.prototype.verify = function () {};
+presetsObject.prototype.verify = function (fromThis, toThis) {
+  for (var key in fromThis) {
+    // var keysFrom = Object.keys(fromThis[key]);
+    var keysTo = Object.keys(toThis);
+
+    for (var keyTo in keysTo) {
+      if (!fromThis[key].hasOwnProperty(keysTo[keyTo])) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
 
 presetsObject.prototype.toString = function () {
   return JSON.stringify(this.data);
@@ -309,13 +349,14 @@ presetsObject.prototype.initPresetsFile = function () {
       resolution_x: "1920",
       resolution_y: "1080",
       render_formats: {
-        mov: false,
+        mov: true,
         mp4: false,
         pngseq: true,
       },
       compress: false,
-      output_name_format: "",
-      output_fileseq_format: "",
+      output_name_format: "*SceneName*-*DisplayNode*",
+      output_fileseq_format: "*####*",
+      output_fileseq_zero_padding: 4,
     },
     2: {
       preset_name: "Full HD mov",
@@ -325,13 +366,14 @@ presetsObject.prototype.initPresetsFile = function () {
       resolution_x: "1920",
       resolution_y: "1080",
       render_formats: {
-        mov: false,
+        mov: true,
         mp4: false,
-        pngseq: true,
+        pngseq: false,
       },
       compress: false,
-      output_name_format: "",
-      output_fileseq_format: "",
+      output_name_format: "*SceneName*-*DisplayNode*",
+      output_fileseq_format: "*####*",
+      output_fileseq_zero_padding: 4,
     },
     3: {
       preset_name: "Low res Test",
@@ -346,8 +388,9 @@ presetsObject.prototype.initPresetsFile = function () {
         pngseq: true,
       },
       compress: false,
-      output_name_format: "",
-      output_fileseq_format: "",
+      output_name_format: "*SceneName*-*DisplayNode*",
+      output_fileseq_format: "*####*",
+      output_fileseq_zero_padding: 4,
     },
   };
   try {
