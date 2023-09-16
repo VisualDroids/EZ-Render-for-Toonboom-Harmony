@@ -51,7 +51,7 @@
                 <bool>false</bool>
                </property>
                <property name="placeholderText">
-                <string>Search</string>
+                <string>Search (Coming Soon)</string>
                </property>
                <property name="clearButtonEnabled">
                 <bool>true</bool>
@@ -166,7 +166,7 @@
              </column>
              <column>
               <property name="text">
-               <string>Output Name Format</string>
+               <string>Filename</string>
               </property>
              </column>
              <column>
@@ -799,6 +799,9 @@ of the render.</string>
       <property name="currentIndex">
        <number>1</number>
       </property>
+      <property name="elideMode">
+       <enum>Qt::ElideMiddle</enum>
+      </property>
       <widget class="QWidget" name="videofile">
        <attribute name="title">
         <string>Video File or Containing Folder</string>
@@ -806,13 +809,6 @@ of the render.</string>
        <layout class="QVBoxLayout" name="verticalLayout_14">
         <item>
          <layout class="QGridLayout" name="gridLayout_13">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Output Name Format:</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="1">
            <widget class="QLineEdit" name="outputNameField">
             <property name="maxLength">
@@ -826,7 +822,38 @@ of the render.</string>
             </property>
            </widget>
           </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Output Name Format:</string>
+            </property>
+           </widget>
+          </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="nameTags">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Name Variables (Click to Add)</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -837,15 +864,43 @@ of the render.</string>
        <layout class="QVBoxLayout" name="verticalLayout_16">
         <item>
          <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
+          <item row="0" column="1">
            <widget class="QLabel" name="label_6">
             <property name="text">
              <string>Output File Sequence Name Format:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
+          <item row="1" column="2">
+           <widget class="QSlider" name="zeroPaddingControl">
+            <property name="minimum">
+             <number>2</number>
+            </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>4</number>
+            </property>
+            <property name="tracking">
+             <bool>true</bool>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>1</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
            <widget class="QLineEdit" name="outputSeqNameField">
+            <property name="text">
+             <string/>
+            </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
@@ -854,47 +909,59 @@ of the render.</string>
             </property>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Sequence Zero Padding:</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="zipfile">
-       <attribute name="title">
-        <string>Zip File</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_15">
         <item>
-         <layout class="QGridLayout" name="gridLayout_8"/>
+         <widget class="QGroupBox" name="seqTags">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Name Variables (Click to Add)</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_10">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
-     </widget>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="filenameTags">
-      <property name="title">
-       <string>Output Name Variables (Click to Add)</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_3"/>
      </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="outputName">
       <property name="title">
-       <string>Ouput Name Example</string>
+       <string>Filename Preview</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_9">
-       <item row="0" column="1">
-        <widget class="QLabel" name="outputNameExample">
+       <item row="1" column="1">
+        <widget class="QLabel" name="outputSeqNameExample">
          <property name="text">
           <string/>
          </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>Image Sequence</string>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -903,17 +970,49 @@ of the render.</string>
          <property name="text">
           <string>Video File</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="outputSeqNameExample">
+       <item row="0" column="1">
+        <widget class="QLabel" name="outputNameExample">
          <property name="text">
           <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Image Sequence</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
+    </item>
+    <item>
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -1042,11 +1141,11 @@ of the render.</string>
   </widget>
  </widget>
  <tabstops>
+  <tabstop>presetsTable</tabstop>
   <tabstop>buttonRender</tabstop>
-  <tabstop>presetName</tabstop>
-  <tabstop>renderTag</tabstop>
-  <tabstop>presetHResolution</tabstop>
-  <tabstop>presetVResolution</tabstop>
+  <tabstop>outputNameField</tabstop>
+  <tabstop>outputSeqNameField</tabstop>
+  <tabstop>cancelRenderButton</tabstop>
   <tabstop>checkBox</tabstop>
   <tabstop>checkBox_8</tabstop>
   <tabstop>checkBox_9</tabstop>
@@ -1057,6 +1156,30 @@ of the render.</string>
   <tabstop>cancelButton</tabstop>
   <tabstop>buttonAddPreset</tabstop>
   <tabstop>buttonDeletePreset</tabstop>
+  <tabstop>searchTextField</tabstop>
+  <tabstop>buttonDuplPreset</tabstop>
+  <tabstop>presetName</tabstop>
+  <tabstop>displaysTable</tabstop>
+  <tabstop>endFrameSpinBox</tabstop>
+  <tabstop>startFrameSpinBox</tabstop>
+  <tabstop>setStartFrameButton</tabstop>
+  <tabstop>setEndFrameButton</tabstop>
+  <tabstop>resetStartEnd</tabstop>
+  <tabstop>outputPath</tabstop>
+  <tabstop>resetOutputLocation</tabstop>
+  <tabstop>browseForFileButton</tabstop>
+  <tabstop>openRenderFolder</tabstop>
+  <tabstop>renderCurrentFrame</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>presetOutputNameEditor</tabstop>
+  <tabstop>renderTag</tabstop>
+  <tabstop>presetHResolution</tabstop>
+  <tabstop>zeroPaddingControl</tabstop>
+  <tabstop>filenameSave</tabstop>
+  <tabstop>filenameGoBack</tabstop>
+  <tabstop>openRendersFolder</tabstop>
+  <tabstop>presetVResolution</tabstop>
+  <tabstop>goBack</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -1067,8 +1190,8 @@ of the render.</string>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>596</y>
+     <x>758</x>
+     <y>690</y>
     </hint>
     <hint type="destinationlabel">
      <x>304</x>

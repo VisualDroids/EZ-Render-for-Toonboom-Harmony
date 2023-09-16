@@ -22,10 +22,6 @@ QGroupBox::title {
   padding-top: 20px;
 }
 
-QTabBar::tab {
-  qproperty-alignment: AlignCenter;
-}
-
 QPushButton {
   background-color: #3b2775;
   border-radius: 6px;
@@ -76,6 +72,26 @@ QTableWidget {
   background-color: #12111e;
   border: 1px solid #12111e;
   alternate-background-color: #1d1c29;
+}
+
+QTableWidget > QWidget > QPushButton {
+  /* background-color: gray; */
+  background: none;
+  border-radius: 5px;
+  border: 1px solid gray;
+  /* padding: 2px; */
+  min-width: 0; /* Allow the button to shrink */
+  min-height: 0;
+  margin: 2px;
+  /* border: none; */
+}
+QTableWidget > QWidget > QPushButton:hover {
+  border-radius: 5px;
+  border: 1px solid gray;
+}
+QTableWidget > QWidget > QPushButton:pressed {
+  border-radius: 5px;
+  border: 1px solid gray;
 }
 
 QHeaderView {
@@ -303,4 +319,104 @@ QProgressBar::chunk {
   background-color: #b739e9;
   border-radius: 5px;
   /* width: 20px; */
+}
+
+/* QTABWIDGET */
+QTabWidget::pane {
+  border: none;
+  border-radius: 10px;
+  background: none;
+}
+
+/* QTabWidget QStackedWidget {
+  background-color: white;
+} */
+
+QTabWidget QStackedWidget > QWidget {
+  /* background-color: yellow; */
+  background: none;
+}
+
+QTabWidget QStackedWidget > QWidget > QLineEdit {
+  background-color: #12111e;
+  border-radius: 6px;
+  border: 0px solid;
+  selection-background-color: #8459ff;
+  selection-color: #e8ebec;
+  min-height: 25px;
+}
+
+QTabWidget::tab-bar {
+  /* alignment: center; */
+  left: 200px;
+}
+
+QTabBar::tab:selected {
+  background: #6644c4;
+  border-radius: 10px;
+  border: none;
+}
+QTabBar::tab:!selected {
+  background: #281a52;
+  border-radius: 10px;
+  border: none;
+}
+
+QSlider {
+  background: none;
+}
+
+QSlider::groove:horizontal {
+  height: 10px;
+  /* width: 350px; */
+  background: #13131e;
+  /* margin: 8px; */
+  border: 1px solid rgb(92, 92, 92);
+  border-radius: 6px;
+}
+QSlider::handle:horizontal {
+  background-color: #6644c4;
+  border: 2px solid gray;
+  width: 16px;
+  height: 20px;
+  line-height: 20px;
+  margin-top: -5px;
+  margin-bottom: -5px;
+  border-radius: 10px;
+}
+
+QSlider::add-page:horizontal {
+  /* height: 10px; */
+  /* background: #e9e9e9; */
+  /* border: 1px solid #c17d08; */
+  /* border-radius: 12px; */
+}
+QSlider::sub-page:horizontal {
+  /* background: #c17d08; */
+  /* height: 6px; */
+  /* border: 1px solid #c17d08; */
+  /* border-radius: 12px; */
+}
+
+#renderOutputBox > QLineEdit {
+  background-color: #12111e;
+  border-radius: 6px;
+  /* border: 0px solid; */
+  selection-background-color: #8459ff;
+  selection-color: #e8ebec;
+  min-height: 25px;
+}
+
+#outputNameExample {
+  background-color: #12111e;
+  border-radius: 6px;
+  border: 1px solid #252525;
+  min-height: 25px;
+}
+
+#outputSeqNameExample {
+  background-color: #12111e;
+  border-radius: 6px;
+  border: 1px solid #252525;
+  min-height: 25px;
 }
