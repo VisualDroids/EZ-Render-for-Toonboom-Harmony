@@ -51,6 +51,9 @@ function EzRender(packageInfo) {
     ),
   };
 
+  this.compressor = require(this.packageInfo.packageFolder +
+    "/lib/FileArchiver/sevenzip.js").SevenZip;
+
   // Supported Format Options
   this.supportedFormats = {
     mov: { title: ".mov (h264)" },
@@ -588,8 +591,9 @@ EzRender.prototype.setupAdvancedUI = function () {
       var obj = this.presets.data;
       var newIndex = Object.keys(obj).length + 1;
       obj[newIndex] = {};
-      obj[newIndex]["render_enabled"] = false;
       obj[newIndex]["preset_name"] = "New Preset";
+      obj[newIndex]["render_enabled"] = false;
+      obj[newIndex]["render_tag"] = "";
       obj[newIndex]["aspect_ratio"] = "Unlocked";
       obj[newIndex]["resolution_x"] = "";
       obj[newIndex]["resolution_y"] = "";
@@ -597,6 +601,7 @@ EzRender.prototype.setupAdvancedUI = function () {
       for (var supportedFormat in this.supportedFormats) {
         obj[newIndex]["render_formats"][supportedFormat] = false;
       }
+      obj[newIndex]["compress"] = false;
       obj[newIndex]["output_name_format"] = "*SceneName*";
       obj[newIndex]["output_fileseq_format"] = "*####*";
       obj[newIndex]["output_fileseq_zero_padding"] = 4;
@@ -642,10 +647,11 @@ EzRender.prototype.setupAdvancedUI = function () {
         var obj = this.presets.data;
         var newIndex = Object.keys(obj).length + 1;
         obj[newIndex] = {};
-        obj[newIndex]["render_enabled"] =
-          obj[selectedItem.index + 1]["render_enabled"];
         obj[newIndex]["preset_name"] =
           obj[selectedItem.index + 1]["preset_name"];
+        obj[newIndex]["render_enabled"] =
+          obj[selectedItem.index + 1]["render_enabled"];
+        obj[newIndex]["render_tag"] = obj[selectedItem.index + 1]["render_tag"];
         obj[newIndex]["aspect_ratio"] =
           obj[selectedItem.index + 1]["aspect_ratio"];
         obj[newIndex]["resolution_x"] =
@@ -657,6 +663,7 @@ EzRender.prototype.setupAdvancedUI = function () {
           obj[newIndex]["render_formats"][supportedFormat] =
             obj[selectedItem.index + 1]["render_formats"][supportedFormat];
         }
+        obj[newIndex]["compress"] = obj[selectedItem.index + 1]["compress"];
         obj[newIndex]["output_name_format"] =
           obj[selectedItem.index + 1]["output_name_format"];
         obj[newIndex]["output_fileseq_format"] =
@@ -1165,6 +1172,12 @@ EzRender.prototype.setupAdvancedUI = function () {
         // if (currentItem.column === 6) {
         //   obj[currentItem.row + 1]["output_name_format"] = currentItem.itemText;
         // }
+
+        // Store Zip/Compress Checkbox
+        if (currentItem.column === 7) {
+          obj[currentItem.row + 1]["compress"] =
+            currentItem.checkState === Qt.Checked;
+        }
 
         // Write presets data
         this.presets.data = obj;
@@ -1885,43 +1898,52 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
     );
 
     //////// FILENAME FORMAT
-    try {
-      var filenameEditButton = new QPushButton("...");
+    var filenameEditButton = new QPushButton("...");
 
-      filenameEditButton.clicked.connect(
-        this,
-        (function (presetName, presetContent) {
-          return function () {
-            try {
-              this.presetToEdit = {};
-              this.presetToEdit[presetName] = presetContent; // The preset to edit is the one that was clicked
+    filenameEditButton.clicked.connect(
+      this,
+      (function (presetName, presetContent) {
+        return function () {
+          try {
+            this.presetToEdit = {};
+            this.presetToEdit[presetName] = presetContent; // The preset to edit is the one that was clicked
 
-              this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.videofile.outputNameField.setText(
-                presetContent.output_name_format
-              );
+            this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.videofile.outputNameField.setText(
+              presetContent.output_name_format
+            );
 
-              this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.setText(
-                presetContent.output_fileseq_format
-              );
-              this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.zeroPaddingControl.value =
-                presetContent.output_fileseq_zero_padding; // Set the zero padding from the preset to the ui
-              this.ui.filenameEditor.presetOutputNameEditor.currentIndex = 0;
-              this.ui.setCurrentWidget(this.ui.filenameEditor);
-            } catch (error) {
-              MessageLog.trace(error);
-            }
-          };
-        })(preset, currentPresets[preset])
+            this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.setText(
+              presetContent.output_fileseq_format
+            );
+            this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.zeroPaddingControl.value =
+              presetContent.output_fileseq_zero_padding; // Set the zero padding from the preset to the ui
+            this.ui.filenameEditor.presetOutputNameEditor.currentIndex = 0;
+            this.ui.setCurrentWidget(this.ui.filenameEditor);
+          } catch (error) {
+            MessageLog.trace(error);
+          }
+        };
+      })(preset, currentPresets[preset])
+    );
+
+    this.ui.main.presetBox.presetsTable.setCellWidget(
+      currentTableIndex,
+      6,
+      filenameEditButton
+    );
+
+    //////// ZIP ENABLED OR DISABLED
+    this.ui.main.presetBox.presetsTable.setItem(
+      currentTableIndex,
+      7,
+      new QTableWidgetItem()
+    );
+
+    this.ui.main.presetBox.presetsTable
+      .item(currentTableIndex, 7)
+      .setCheckState(
+        currentPresets[preset].compress == true ? Qt.Checked : Qt.Unchecked
       );
-
-      this.ui.main.presetBox.presetsTable.setCellWidget(
-        currentTableIndex,
-        6,
-        filenameEditButton
-      );
-    } catch (error) {
-      MessageLog.trace(error);
-    }
   }
 
   // Hacky method to force last header section to stretch to the end. setStretchLastSection doesnt work on tbh
@@ -2057,8 +2079,6 @@ EzRender.prototype.renderEngine = function () {
           };
         });
 
-      MessageLog.trace(JSON.stringify(enabledDisplays));
-
       // var index = 0;
       // for (var preset in renderPresets) {
       //   if (renderPresets[preset].render_enabled) {
@@ -2074,7 +2094,6 @@ EzRender.prototype.renderEngine = function () {
         .map(function (preset) {
           return renderPresets[preset];
         });
-      MessageLog.trace(JSON.stringify(enabledPresets));
     }
 
     if (Object.keys(enabledPresets).length === 0) {
@@ -2097,6 +2116,7 @@ EzRender.prototype.renderEngine = function () {
     }
 
     for (var preset in enabledPresets) {
+      var perPresetRenderedStuff = [];
       for (var renderDisplay in enabledDisplays) {
         // If interrupt button gets clicked, stop all renders at next render start
         if (this.interruptRender) {
@@ -2178,27 +2198,77 @@ EzRender.prototype.renderEngine = function () {
           progressWidget.progressText.text +=
             "Format: " + "MOV (Quicktime)" + "\n";
 
-          this.movRenderer.call(
-            this,
-            this.versionedPath(renderFullOutputPath),
-            currentPreset.resolution_x,
-            currentPreset.resolution_y,
-            currentDisplay.name,
-            progressWidget
+          perPresetRenderedStuff.push(
+            this.movRenderer.call(
+              this,
+              this.versionedPath(renderFullOutputPath),
+              currentPreset.resolution_x,
+              currentPreset.resolution_y,
+              currentDisplay.name,
+              progressWidget
+            )
           );
         }
         if (currentPreset.render_formats.pngseq) {
           progressWidget.progressText.text +=
             "Format: " + "PNG Sequence" + "\n";
 
-          this.pngRenderer.call(
-            this,
-            (workingPreset = currentPreset),
-            (selectedDisplay = currentDisplay),
-            (progressWidget = progressWidget)
+          perPresetRenderedStuff.push(
+            this.pngRenderer.call(
+              this,
+              (workingPreset = currentPreset),
+              (selectedDisplay = currentDisplay),
+              (progressWidget = progressWidget)
+            )
           );
         }
+
+        if (currentPreset.compress) {
+          progressWidget.progressText.text += "Compressing..." + "\n";
+
+          var outputPath =
+            this.outputFolder +
+            "/" +
+            this.processTags.call(
+              this,
+              currentPreset.output_name_format,
+              currentPreset,
+              { pngseq: true },
+              currentDisplay.name
+            );
+
+          var versionedPath = this.versionedPath(outputPath + ".zip");
+
+          // MessageLog.trace("Output path: " + outputPath);
+          // MessageLog.trace("Versioned path: " + versionedPath);
+
+          if (perPresetRenderedStuff.length > 0) {
+            var zipper = new this.compressor(
+              (parentContext = this),
+              (sources = perPresetRenderedStuff),
+              (destination = versionedPath),
+              (processStartCallback = function () {
+                // MessageLog.trace("started! ");
+              }),
+              (progressCallback = function (progress) {
+                // MessageLog.trace("progress: " + progress);
+              }),
+              (processEndCallback = function (success) {
+                // MessageLog.trace("ended! " + success);
+              }),
+              (debugCallback = function (message) {
+                // MessageLog.trace("debug: " + message);
+              }),
+              (filter = ""),
+              (debug = this.debug)
+            );
+            zipper.zipAsync((deleteSource = true));
+            perPresetRenderedStuff = [];
+          }
+        }
       }
+
+      // MessageLog.trace("perPresetRenderedStuff: " + perPresetRenderedStuff);
     }
 
     // Open render output folder when called from the toolbar
@@ -2210,6 +2280,7 @@ EzRender.prototype.renderEngine = function () {
   } catch (error) {
     this.renderSuccess = false;
     MessageLog.trace(error);
+    MessageLog.trace("Line: " + error.lineNumber);
   }
 };
 
@@ -2220,141 +2291,22 @@ EzRender.prototype.movRenderer = function (
   selectedDisplay,
   progressWidget
 ) {
-  try {
-    if (about.isMacArch()) {
-      // this.toolbarui.progressBar.setVisible(false);
+  if (about.isMacArch()) {
+    // this.toolbarui.progressBar.setVisible(false);
 
-      exporter.exportToQuicktime(
-        (displayName = ""),
-        (startFrame = scene.getStartFrame()),
-        (lastFrame = scene.getStopFrame()),
-        (withSound = true),
-        (resX = resolutionX),
-        (resY = resolutionY),
-        (dstPath = outputPath),
-        (displayModule = selectedDisplay),
-        (generateThumbnail = false),
-        (thumbnailFrame = 0)
-      );
-    } else {
-      // Create a temporary folder for holding png sequence
-      var tmpFolder = new QDir(
-        fileMapper.toNativePath(
-          specialFolders.temp + "/" + Math.random().toString(36).slice(-8) + "/"
-        )
-      );
-      if (!tmpFolder.exists()) {
-        tmpFolder.mkpath(tmpFolder.path());
-      }
-
-      outputPath = fileMapper.toNativePath(outputPath);
-      // var outputPathWithoutExtension = outputPath.split(".").slice(0, -1).join(".");
-      var renderedFrames = [];
-
-      var currentPercentage = scene.getStartFrame();
-      progressWidget.progressBar.setRange(
-        scene.getStartFrame(),
-        scene.getStopFrame()
-      );
-      progressWidget.progressBar.value = currentPercentage;
-
-      var numberOfFrames = scene.getStopFrame();
-
-      for (
-        var thisFrame = scene.getStartFrame();
-        thisFrame <= numberOfFrames;
-        thisFrame++
-      ) {
-        this.frameReady = function (frame, celImage) {
-          QCoreApplication.processEvents();
-          var outFrame =
-            tmpFolder.path() + "/" + ("000000" + thisFrame).slice(-6) + ".png";
-          celImage.imageFileAs(outFrame, "", "PNG");
-          renderedFrames.push(outFrame);
-
-          currentPercentage += 1;
-          this.log("Current frame: " + currentPercentage);
-          progressWidget.progressBar.value = currentPercentage;
-          QCoreApplication.processEvents();
-        };
-
-        this.renderFinished = function () {
-          render.renderFinished.disconnect(this, this.renderFinished);
-          render.frameReady.disconnect(this, this.frameReady);
-          QCoreApplication.processEvents();
-        };
-
-        render.renderFinished.connect(this, this.renderFinished);
-        render.setResolution(resolutionX, resolutionY);
-        render.frameReady.connect(this, this.frameReady);
-        render.setRenderDisplay(selectedDisplay);
-
-        render.renderScene(thisFrame, thisFrame);
-      }
-
-      renderedFrames.sort(function (a, b) {
-        return a < b ? -1 : 1;
-      });
-
-      this.ui.progress.renderProgress.progressText.text =
-        "Creating MOV file...";
-      this.ui.progress.renderProgress.progressBar.setMaximum(0);
-      this.ui.progress.renderProgress.progressBar.setMinimum(0);
-      this.ui.progress.renderProgress.progressBar.setValue(0);
-
-      WebCCExporter.exportMovieFromFiles(
-        (movieFilename = outputPath),
-        (framesFilenames = renderedFrames),
-        (firstFrame = scene.getStartFrame()),
-        (lastFrame = scene.getStopFrame()),
-        (withSound = true),
-        (maxQp = 25),
-        (iFramePeriod = 1)
-      );
-
-      tmpFolder.removeRecursively();
-
-      QCoreApplication.processEvents();
-
-      this.ui.progress.renderProgress.progressBar.setMaximum(100);
-      this.ui.progress.renderProgress.progressBar.setMinimum(0);
-    }
-  } catch (error) {
-    this.log(error);
-  }
-};
-
-EzRender.prototype.pngRenderer = function (
-  workingPreset,
-  selectedDisplay,
-  progressWidget
-) {
-  try {
-    // Format the output path with the tags
-    var outputPath =
-      this.outputFolder +
-      "/" +
-      this.processTags.call(
-        this,
-        workingPreset.output_name_format +
-          "/" +
-          workingPreset.output_fileseq_format,
-        workingPreset,
-        { pngseq: true },
-        selectedDisplay.name
-      );
-
-    var outputFolder = this.versionedPath(
-      outputPath.split("/").slice(0, -1).join("/")
+    exporter.exportToQuicktime(
+      (displayName = ""),
+      (startFrame = scene.getStartFrame()),
+      (lastFrame = scene.getStopFrame()),
+      (withSound = true),
+      (resX = resolutionX),
+      (resY = resolutionY),
+      (dstPath = outputPath),
+      (displayModule = selectedDisplay),
+      (generateThumbnail = false),
+      (thumbnailFrame = 0)
     );
-
-    // Extract the filename from the output path
-    var outputFilename = outputPath.split("/").pop();
-    outputFilename = outputFilename.slice(
-      0,
-      -workingPreset.output_fileseq_zero_padding
-    );
-
+  } else {
     // Create a temporary folder for holding png sequence
     var tmpFolder = new QDir(
       fileMapper.toNativePath(
@@ -2365,6 +2317,8 @@ EzRender.prototype.pngRenderer = function (
       tmpFolder.mkpath(tmpFolder.path());
     }
 
+    outputPath = fileMapper.toNativePath(outputPath);
+    // var outputPathWithoutExtension = outputPath.split(".").slice(0, -1).join(".");
     var renderedFrames = [];
 
     var currentPercentage = scene.getStartFrame();
@@ -2382,27 +2336,14 @@ EzRender.prototype.pngRenderer = function (
       thisFrame++
     ) {
       this.frameReady = function (frame, celImage) {
-        this.log(
-          "\nCurrent Percentage: " +
-            currentPercentage +
-            "\nCurrent Frame: " +
-            frame +
-            "\n "
-        );
+        QCoreApplication.processEvents();
+        var outFrame =
+          tmpFolder.path() + "/" + ("000000" + thisFrame).slice(-6) + ".png";
+        celImage.imageFileAs(outFrame, "", "PNG");
+        renderedFrames.push(outFrame);
 
-        var padding = workingPreset.output_fileseq_zero_padding;
-        var paddingString = "";
-        for (var i = 0; i < padding; i++) {
-          paddingString += "0";
-        }
-        var paddedFrameNumber = (paddingString + thisFrame).slice(-padding);
-
-        var outFramePath =
-          tmpFolder.path() + "/" + outputFilename + paddedFrameNumber + ".png";
-
-        celImage.imageFileAs(outFramePath, "", "PNG4");
-        renderedFrames.push(outFramePath);
         currentPercentage += 1;
+        this.log("Current frame: " + currentPercentage);
         progressWidget.progressBar.value = currentPercentage;
         QCoreApplication.processEvents();
       };
@@ -2414,35 +2355,163 @@ EzRender.prototype.pngRenderer = function (
       };
 
       render.renderFinished.connect(this, this.renderFinished);
-      render.setResolution(
-        workingPreset.resolution_x,
-        workingPreset.resolution_y
-      );
+      render.setResolution(resolutionX, resolutionY);
       render.frameReady.connect(this, this.frameReady);
-      render.setRenderDisplay(selectedDisplay.path);
+      render.setRenderDisplay(selectedDisplay);
 
       render.renderScene(thisFrame, thisFrame);
     }
 
-    // // Zipper Function for future Implementation
-    // var zipper = new (require(this.packageInfo.packageFolder +
-    //   "/lib/FileArchiver/sevenzip.js").SevenZip)(
-    //   (parentContext = this),
-    //   (source = tmpFolder.path()),
-    //   (destination = outputPath),
-    //   (debug = this.debug)
-    // );
-    // zipper.zip();
+    renderedFrames.sort(function (a, b) {
+      return a < b ? -1 : 1;
+    });
 
-    this.copyFolderRecursively(
-      tmpFolder.path(),
-      fileMapper.toNativePath(outputFolder)
+    this.ui.progress.renderProgress.progressText.text = "Creating MOV file...";
+    this.ui.progress.renderProgress.progressBar.setMaximum(0);
+    this.ui.progress.renderProgress.progressBar.setMinimum(0);
+    this.ui.progress.renderProgress.progressBar.setValue(0);
+
+    WebCCExporter.exportMovieFromFiles(
+      (movieFilename = outputPath),
+      (framesFilenames = renderedFrames),
+      (firstFrame = scene.getStartFrame()),
+      (lastFrame = scene.getStopFrame()),
+      (withSound = true),
+      (maxQp = 25),
+      (iFramePeriod = 1)
     );
 
     tmpFolder.removeRecursively();
-  } catch (error) {
-    this.log(error);
+
+    QCoreApplication.processEvents();
+
+    this.ui.progress.renderProgress.progressBar.setMaximum(100);
+    this.ui.progress.renderProgress.progressBar.setMinimum(0);
   }
+  return outputPath;
+};
+
+EzRender.prototype.pngRenderer = function (
+  workingPreset,
+  selectedDisplay,
+  progressWidget
+) {
+  // try {
+  // Format the output path with the tags
+  var outputPath =
+    this.outputFolder +
+    "/" +
+    this.processTags.call(
+      this,
+      workingPreset.output_name_format +
+        "/" +
+        workingPreset.output_fileseq_format,
+      workingPreset,
+      { pngseq: true },
+      selectedDisplay.name
+    );
+
+  var outputFolder = this.versionedPath(
+    outputPath.split("/").slice(0, -1).join("/")
+  );
+
+  // Extract the filename from the output path
+  var outputFilename = outputPath.split("/").pop();
+  outputFilename = outputFilename.slice(
+    0,
+    -workingPreset.output_fileseq_zero_padding
+  );
+
+  // Create a temporary folder for holding png sequence
+  var tmpFolder = new QDir(
+    fileMapper.toNativePath(
+      specialFolders.temp + "/" + Math.random().toString(36).slice(-8) + "/"
+    )
+  );
+  if (!tmpFolder.exists()) {
+    tmpFolder.mkpath(tmpFolder.path());
+  }
+
+  var renderedFrames = [];
+
+  var currentPercentage = scene.getStartFrame();
+  progressWidget.progressBar.setRange(
+    scene.getStartFrame(),
+    scene.getStopFrame()
+  );
+  progressWidget.progressBar.value = currentPercentage;
+
+  var numberOfFrames = scene.getStopFrame();
+
+  for (
+    var thisFrame = scene.getStartFrame();
+    thisFrame <= numberOfFrames;
+    thisFrame++
+  ) {
+    if (this.interruptRender) {
+      // this.interruptRender = false;
+      this.copyFolderRecursively(
+        tmpFolder.path(),
+        fileMapper.toNativePath(outputFolder)
+      );
+
+      tmpFolder.removeRecursively();
+      throw new Error("Render Interrupted");
+      // break;
+    }
+
+    this.frameReady = function (frame, celImage) {
+      this.log(
+        "\nCurrent Percentage: " +
+          currentPercentage +
+          "\nCurrent Frame: " +
+          frame +
+          "\n "
+      );
+
+      var padding = workingPreset.output_fileseq_zero_padding;
+      var paddingString = "";
+      for (var i = 0; i < padding; i++) {
+        paddingString += "0";
+      }
+      var paddedFrameNumber = (paddingString + thisFrame).slice(-padding);
+
+      var outFramePath =
+        tmpFolder.path() + "/" + outputFilename + paddedFrameNumber + ".png";
+
+      celImage.imageFileAs(outFramePath, "", "PNG4");
+      renderedFrames.push(outFramePath);
+      currentPercentage += 1;
+      progressWidget.progressBar.value = currentPercentage;
+      QCoreApplication.processEvents();
+    };
+
+    this.renderFinished = function () {
+      render.renderFinished.disconnect(this, this.renderFinished);
+      render.frameReady.disconnect(this, this.frameReady);
+      QCoreApplication.processEvents();
+    };
+
+    render.renderFinished.connect(this, this.renderFinished);
+    render.setResolution(
+      workingPreset.resolution_x,
+      workingPreset.resolution_y
+    );
+    render.frameReady.connect(this, this.frameReady);
+    render.setRenderDisplay(selectedDisplay.path);
+
+    render.renderScene(thisFrame, thisFrame);
+  }
+
+  // Copy from temp folder to output folder
+  this.copyFolderRecursively(
+    tmpFolder.path(),
+    fileMapper.toNativePath(outputFolder)
+  );
+
+  // Remove temp folder
+  tmpFolder.removeRecursively();
+  return outputFolder;
 };
 
 // File system handling functions
