@@ -1141,8 +1141,8 @@ of the render.</string>
   </widget>
  </widget>
  <tabstops>
-  <tabstop>presetsTable</tabstop>
   <tabstop>buttonRender</tabstop>
+  <tabstop>pushButton_2</tabstop>
   <tabstop>outputNameField</tabstop>
   <tabstop>outputSeqNameField</tabstop>
   <tabstop>cancelRenderButton</tabstop>
@@ -1170,7 +1170,7 @@ of the render.</string>
   <tabstop>browseForFileButton</tabstop>
   <tabstop>openRenderFolder</tabstop>
   <tabstop>renderCurrentFrame</tabstop>
-  <tabstop>pushButton_2</tabstop>
+  <tabstop>presetsTable</tabstop>
   <tabstop>presetOutputNameEditor</tabstop>
   <tabstop>renderTag</tabstop>
   <tabstop>presetHResolution</tabstop>

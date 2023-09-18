@@ -1637,6 +1637,12 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
         node.getEnable(currentDisplayNodes[displayNode]) == true ? 2 : 0
       );
 
+    this.ui.main.displayBox.displaysTable
+      .item(displayNode, 0)
+      .setFlags(
+        Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | !Qt.ItemIsSelectable
+      );
+
     //////// DISPLAY NAME
     this.ui.main.displayBox.displaysTable.setItem(
       displayNode,
@@ -1656,6 +1662,12 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       displayPluggedItem
     );
 
+    this.ui.main.displayBox.displaysTable
+      .item(displayNode, 2)
+      .setFlags(
+        Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | !Qt.ItemIsSelectable
+      );
+
     //////// DISPLAY PATH
     var displayPath = currentDisplayNodes[displayNode].split("/");
     displayPath.pop();
@@ -1665,6 +1677,12 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       3,
       new QTableWidgetItem(displayPath)
     );
+
+    this.ui.main.displayBox.displaysTable
+      .item(displayNode, 3)
+      .setFlags(
+        Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | !Qt.ItemIsSelectable
+      );
   }
 
   for (
@@ -1713,6 +1731,19 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
         currentPresets[preset].render_enabled == true
           ? Qt.Checked
           : Qt.Unchecked
+      );
+
+    this.ui.main.presetBox.presetsTable.item(currentTableIndex, 0).setText("");
+
+    this.ui.main.presetBox.presetsTable.item(
+      currentTableIndex,
+      0
+    ).setVisible = false;
+
+    this.ui.main.presetBox.presetsTable
+      .item(currentTableIndex, 0)
+      .setFlags(
+        Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | !Qt.ItemIsSelectable
       );
 
     //////// PRESET NAME
@@ -1943,6 +1974,12 @@ EzRender.prototype.refreshPresetsAndDisplays = function () {
       .item(currentTableIndex, 7)
       .setCheckState(
         currentPresets[preset].compress == true ? Qt.Checked : Qt.Unchecked
+      );
+
+    this.ui.main.presetBox.presetsTable
+      .item(currentTableIndex, 7)
+      .setFlags(
+        Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | !Qt.ItemIsSelectable
       );
   }
 
