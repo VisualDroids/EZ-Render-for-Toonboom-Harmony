@@ -18,3 +18,7 @@
 	path = code/lib/AudioPlayer
 	url = https://github.com/miwgel/Audio-Player-for-Tooonboom-Harmony
 	branch = main
+[submodule "code/lib/FileSystem"]
+	path = code/lib/FileSystem
+	url = https://github.com/miwgel/File-System-Module-for-Toonboom-Harmony-Scripts
+	branch = main
