@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>772</width>
+    <width>770</width>
     <height>709</height>
    </rect>
   </property>
@@ -17,7 +17,7 @@
    <string notr="true"/>
   </property>
   <property name="currentIndex">
-   <number>2</number>
+   <number>0</number>
   </property>
   <widget class="QWidget" name="main">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -45,21 +45,8 @@
              <property name="sizeConstraint">
               <enum>QLayout::SetMinimumSize</enum>
              </property>
-             <item row="0" column="0">
-              <widget class="QLineEdit" name="searchTextField">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="placeholderText">
-                <string>Search (Coming Soon)</string>
-               </property>
-               <property name="clearButtonEnabled">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QPushButton" name="buttonAddPreset">
+             <item row="0" column="2">
+              <widget class="QPushButton" name="buttonDuplPreset">
                <property name="maximumSize">
                 <size>
                  <width>30</width>
@@ -67,7 +54,7 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>Add Preset</string>
+                <string>Duplicate Selected Preset</string>
                </property>
                <property name="text">
                 <string/>
@@ -90,8 +77,8 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="2">
-              <widget class="QPushButton" name="buttonDuplPreset">
+             <item row="0" column="1">
+              <widget class="QPushButton" name="buttonAddPreset">
                <property name="maximumSize">
                 <size>
                  <width>30</width>
@@ -99,10 +86,23 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>Duplicate Selected Preset</string>
+                <string>Add Preset</string>
                </property>
                <property name="text">
                 <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLineEdit" name="searchTextField">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="placeholderText">
+                <string/>
+               </property>
+               <property name="clearButtonEnabled">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -248,7 +248,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Timeline</string>
+         <string>Render Range</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -362,13 +362,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QPushButton" name="renderCurrentFrame">
-           <property name="text">
-            <string>Render Current Frame</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -376,6 +369,13 @@
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="renderCurrentFrame">
+        <property name="text">
+         <string>Render Current Frame (PNG)</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="buttonRender">
         <property name="sizePolicy">
@@ -1169,7 +1169,6 @@ of the render.</string>
   <tabstop>resetOutputLocation</tabstop>
   <tabstop>browseForFileButton</tabstop>
   <tabstop>openRenderFolder</tabstop>
-  <tabstop>renderCurrentFrame</tabstop>
   <tabstop>presetsTable</tabstop>
   <tabstop>presetOutputNameEditor</tabstop>
   <tabstop>renderTag</tabstop>

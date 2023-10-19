@@ -821,6 +821,13 @@ EzRender.prototype.setupAdvancedUI = function () {
   this.ui.main.timeline.startFrameSpinBox.setValue(scene.getStartFrame());
   this.ui.main.timeline.endFrameSpinBox.setValue(scene.getStopFrame());
 
+  // Update Render Button Text on Startup
+  this.ui.main.buttonRender.text =
+    "Render from Frame " +
+    scene.getStartFrame() +
+    " to " +
+    scene.getStopFrame();
+
   this.ui.main.timeline.startFrameSpinBox.valueChanged.connect(
     this,
     function (frameNumber) {
@@ -833,6 +840,11 @@ EzRender.prototype.setupAdvancedUI = function () {
         scene.getStartFrame() + 1,
         frame.numberOf()
       );
+      this.ui.main.buttonRender.text =
+        "Render from Frame " +
+        scene.getStartFrame() +
+        " to " +
+        scene.getStopFrame();
     }
   );
   this.ui.main.timeline.endFrameSpinBox.valueChanged.connect(
@@ -847,6 +859,11 @@ EzRender.prototype.setupAdvancedUI = function () {
         scene.getStartFrame() + 1,
         frame.numberOf()
       );
+      this.ui.main.buttonRender.text =
+        "Render from Frame " +
+        scene.getStartFrame() +
+        " to " +
+        scene.getStopFrame();
     }
   );
 
@@ -1386,6 +1403,9 @@ EzRender.prototype.setupAdvancedUI = function () {
   this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.cursorPositionChanged.connect(
     this,
     function (oldPosition, newPosition) {
+      this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.blockSignals(
+        true
+      );
       var fieldLength =
         this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget
           .imgseq.outputSeqNameField.text.length;
@@ -1398,6 +1418,9 @@ EzRender.prototype.setupAdvancedUI = function () {
         this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.cursorPosition =
           oldPosition;
       }
+      this.ui.filenameEditor.presetOutputNameEditor.qt_tabwidget_stackedwidget.imgseq.outputSeqNameField.blockSignals(
+        false
+      );
     }
   );
 
@@ -1440,93 +1463,90 @@ EzRender.prototype.setupAdvancedUI = function () {
     this.openFolder.call(this, this.outputFolder);
   });
 
-  this.ui.main.quickOptions.renderCurrentFrame.clicked.connect(
-    this,
-    function () {
+  this.ui.main.renderCurrentFrame.clicked.connect(this, function () {
+    try {
+      // var startFrame = scene.getStartFrame();
+      // var stopFrame = scene.getStopFrame();
+      // scene.setStartFrame(frame.current());
+      // scene.setStopFrame(frame.current());
+      Timeline.centerOnFrame(frame.current());
+
+      this.interruptRender = false;
+      this.renderSuccess = false;
+      // this.renderMode = "Advanced";
+      this.ui.setCurrentWidget(this.ui.progress);
+      this.ui.progress.renderProgress.openRendersFolder.setVisible(false);
+      this.ui.progress.renderProgress.goBack.setVisible(false);
+      this.ui.progress.renderProgress.progressBar.setVisible(true);
+      this.ui.progress.renderProgress.progressBar.setRange(0, 0);
+      this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
+      this.ui.progress.renderProgress.cancelRenderButton.text = "Cancel";
       try {
-        // var startFrame = scene.getStartFrame();
-        // var stopFrame = scene.getStopFrame();
-        // scene.setStartFrame(frame.current());
-        // scene.setStopFrame(frame.current());
-        Timeline.centerOnFrame(frame.current());
+        // this.pngRenderer.call(
+        //   this,
+        //   this.versionedPath(
+        //     this.outputFolder + "/" + scene.currentScene() + "-"
+        //   ),
+        //   scene.currentResolutionX(),
+        //   scene.currentResolutionY(),
+        //   scene.getDefaultDisplay(),
+        //   this.ui.progress.renderProgress
+        // );
 
-        this.interruptRender = false;
-        this.renderSuccess = false;
-        // this.renderMode = "Advanced";
-        this.ui.setCurrentWidget(this.ui.progress);
-        this.ui.progress.renderProgress.openRendersFolder.setVisible(false);
-        this.ui.progress.renderProgress.goBack.setVisible(false);
-        this.ui.progress.renderProgress.progressBar.setVisible(true);
-        this.ui.progress.renderProgress.progressBar.setRange(0, 0);
-        this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
-        this.ui.progress.renderProgress.cancelRenderButton.text = "Cancel";
-        try {
-          // this.pngRenderer.call(
-          //   this,
-          //   this.versionedPath(
-          //     this.outputFolder + "/" + scene.currentScene() + "-"
-          //   ),
-          //   scene.currentResolutionX(),
-          //   scene.currentResolutionY(),
-          //   scene.getDefaultDisplay(),
-          //   this.ui.progress.renderProgress
-          // );
-
-          this.frameReady = function (frame, celImage) {
-            var outFrame = this.versionedPath(
-              this.outputFolder +
-                "/" +
-                scene.currentScene() +
-                "-" +
-                ("000000" + frame).slice(-6) +
-                ".png"
-            );
-            celImage.imageFileAs(outFrame, "", "PNG4");
-            // renderedFrames.push(outFrame);
-            QCoreApplication.processEvents();
-          };
-
-          this.renderFinished = function () {
-            render.renderFinished.disconnect(this, this.renderFinished);
-            render.frameReady.disconnect(this, this.frameReady);
-            this.renderSuccess = true;
-            QCoreApplication.processEvents();
-          };
-
-          render.renderFinished.connect(this, this.renderFinished);
-          render.setResolution(
-            scene.currentResolutionX(),
-            scene.currentResolutionY()
+        this.frameReady = function (frame, celImage) {
+          var outFrame = this.versionedPath(
+            this.outputFolder +
+              "/" +
+              scene.currentScene() +
+              "-" +
+              ("000000" + frame).slice(-6) +
+              ".png"
           );
-          render.frameReady.connect(this, this.frameReady);
-          render.setRenderDisplay(scene.getDefaultDisplay());
+          celImage.imageFileAs(outFrame, "", "PNG4");
+          // renderedFrames.push(outFrame);
+          QCoreApplication.processEvents();
+        };
 
-          render.renderScene(frame.current(), frame.current());
-        } catch (error) {
-          this.renderSuccess = false;
-          MessageLog.trace(error);
-        }
-        this.ui.progress.renderProgress.progressBar.setVisible(false);
-        if (this.renderSuccess) {
-          this.ui.progress.renderProgress.openRendersFolder.setVisible(true);
-          this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
-          this.beep.win.play();
-          this.ui.progress.renderProgress.progressText.text =
-            "✅ Render complete ✅";
-          this.ui.progress.renderProgress.goBack.setVisible(true);
-        } else {
-          this.ui.progress.renderProgress.openRendersFolder.setVisible(true);
-          this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
-          this.beep.fail.play();
-          this.ui.progress.renderProgress.progressText.text =
-            "⛔ Render ended before completion ⛔";
-          this.ui.progress.renderProgress.goBack.setVisible(true);
-        }
+        this.renderFinished = function () {
+          render.renderFinished.disconnect(this, this.renderFinished);
+          render.frameReady.disconnect(this, this.frameReady);
+          this.renderSuccess = true;
+          QCoreApplication.processEvents();
+        };
+
+        render.renderFinished.connect(this, this.renderFinished);
+        render.setResolution(
+          scene.currentResolutionX(),
+          scene.currentResolutionY()
+        );
+        render.frameReady.connect(this, this.frameReady);
+        render.setRenderDisplay(scene.getDefaultDisplay());
+
+        render.renderScene(frame.current(), frame.current());
       } catch (error) {
+        this.renderSuccess = false;
         MessageLog.trace(error);
       }
+      this.ui.progress.renderProgress.progressBar.setVisible(false);
+      if (this.renderSuccess) {
+        this.ui.progress.renderProgress.openRendersFolder.setVisible(true);
+        this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
+        this.beep.win.play();
+        this.ui.progress.renderProgress.progressText.text =
+          "✅ Render complete ✅";
+        this.ui.progress.renderProgress.goBack.setVisible(true);
+      } else {
+        this.ui.progress.renderProgress.openRendersFolder.setVisible(true);
+        this.ui.progress.renderProgress.cancelRenderButton.setVisible(false);
+        this.beep.fail.play();
+        this.ui.progress.renderProgress.progressText.text =
+          "⛔ Render ended before completion ⛔";
+        this.ui.progress.renderProgress.goBack.setVisible(true);
+      }
+    } catch (error) {
+      MessageLog.trace(error);
     }
-  );
+  });
 };
 
 EzRender.prototype.showAdvancedUI = function () {

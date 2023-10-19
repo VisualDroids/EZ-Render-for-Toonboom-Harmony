@@ -73,11 +73,29 @@ function configure(packageFolder, packageName) {
     categoryId: "Visual Droids",
     categoryText: packageInfo.packageShortName,
   });
+
   ScriptManager.addShortcut({
     id: packageInfo.packageID + "keybind2",
     text: "EZ Render: Set Current Frame as End Frame for the Render",
     action: "setEndFrame in " + packageFolder + "/configure.js",
     longDesc: "Triggers a backup right away",
+    categoryId: "Visual Droids",
+    categoryText: packageInfo.packageShortName,
+  });
+
+  ScriptManager.addShortcut({
+    id: packageInfo.packageID + "keybind3",
+    text: "EZ Render: Create a new Composite Node",
+    action: "createComposite in " + packageFolder + "/configure.js",
+    longDesc: "Creates a new Composite in the node view",
+    categoryId: "Visual Droids",
+    categoryText: packageInfo.packageShortName,
+  });
+  ScriptManager.addShortcut({
+    id: packageInfo.packageID + "keybind4",
+    text: "EZ Render: Create a new Display Node",
+    action: "createDisplay in " + packageFolder + "/configure.js",
+    longDesc: "Creates a new Display in the node view",
     categoryId: "Visual Droids",
     categoryText: packageInfo.packageShortName,
   });
@@ -193,6 +211,14 @@ function setStartFrame() {
 
 function setEndFrame() {
   scene.setStopFrame(frame.current());
+}
+
+function createComposite() {
+  Action.perform("onActionCreateComposite()", "Node View");
+}
+
+function createDisplay() {
+  Action.perform("onActionCreateDisplay()", "Node View");
 }
 
 function fastDebugger() {
